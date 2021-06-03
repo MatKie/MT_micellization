@@ -10,6 +10,7 @@ class BaseMicelle(object):
         self._g = g
         self._T = T
         self._nt = nt
+        self.transfer_free_energy = None
 
     @property
     def volume(self):
@@ -55,6 +56,19 @@ class BaseMicelle(object):
             self._nt = new_nt
         else:
             raise ValueError("Taillenth needs to be greater than zero.")
+
+    def get_transfer_free_energy(self, method="empirical"):
+        methods = {"empirical": self._transfer_empirical, "SAFT": None}
+        self.transfer_free_energy = methods.get(method, self._transfer_empirical())()
+        return self.transfer_free_energy
+
+    def _transfer_empirical(self):
+        transfer_ch3 = (
+            3.38 * np.log(self.T) + 4046.0 / self.T + 0.02595 * self.T - 44.13
+        )
+
+        transfer_ch2 = 5.85 * np.log(self.T) + 896.0 / self.T - 0.0056 * self.T - 36.15
+        return (self.nt - 1) * transfer_ch2 + transfer_ch3
 
 
 class SphericalMicelle(BaseMicelle):
