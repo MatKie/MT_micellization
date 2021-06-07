@@ -1,10 +1,13 @@
 import pytest
 import sys
+import numpy as np
+import os
+from mkutils import create_fig, save_to_file
 from MTM import micelle
 from MTM import literature
 
 sys.path.append("../")
-
+this_path = os.path.dirname(__file__)
 from MTM import micelle
 from MTM import literature
 
@@ -88,5 +91,70 @@ class TestBaseMicelleGetTransferFreeEnergy:
             assert value == pytest.approx(mic.get_transfer_free_energy(), 5e-3)
 
 
-class TestSphericalMicelle:
-    pass
+class TestSphericalMicelleInterface:
+    def test_regress_tension_dodecane(self):
+        lit = literature.LiteratureData()
+        pub_values = lit.tension_dodecane_MT
+        mic = micelle.SphericalMicelle(1e4, 298.15, 10)
+        fig, ax = create_fig(1, 1)
+        ax = ax[0]
+        calc_values = np.zeros(pub_values.shape)
+        for i, Temp in enumerate(pub_values[:, 0]):
+            mic.T = Temp
+            sigma_agg = mic._sigma_agg() * 1.38064852 * 0.01 * mic.T
+            calc_values[i, 0] = Temp
+            calc_values[i, 1] = sigma_agg
+
+        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+
+        ax.legend()
+
+        save_to_file(os.path.join(this_path, "regress_tension_dodecane"))
+
+        for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
+            assert calc == pytest.approx(pub, 1e-3)
+
+    def test_regress_interface_free_energy_298(self):
+        lit = literature.LiteratureData()
+        pub_values = lit.interface_sph_298_MT
+        mic = micelle.SphericalMicelle(1, 298.15, 8)
+        fig, ax = create_fig(1, 1)
+        ax = ax[0]
+        calc_values = np.zeros(pub_values.shape)
+        for i, g in enumerate(pub_values[:, 0]):
+            mic.g = g
+            calc_values[i, 0] = g
+            calc_values[i, 1] = mic.get_interface_free_energy()
+
+        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+
+        ax.legend()
+
+        save_to_file(os.path.join(this_path, "regress_interface_free_energy_298"))
+
+        for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
+            assert calc == pytest.approx(pub, abs=0.01)
+
+    def test_regress_interface_free_energy_330(self):
+        lit = literature.LiteratureData()
+        pub_values = lit.interface_sph_330_MT
+        mic = micelle.SphericalMicelle(1, 330, 8)
+        fig, ax = create_fig(1, 1)
+        ax = ax[0]
+        calc_values = np.zeros(pub_values.shape)
+        for i, g in enumerate(pub_values[:, 0]):
+            mic.g = g
+            calc_values[i, 0] = g
+            calc_values[i, 1] = mic.get_interface_free_energy()
+
+        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+
+        ax.legend()
+
+        save_to_file(os.path.join(this_path, "regress_interface_free_energy_330"))
+
+        for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
+            assert calc == pytest.approx(pub, abs=0.1)
