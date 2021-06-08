@@ -40,6 +40,8 @@ class BaseMicelle(object):
         self.headgroup_area = headgroup_area
         self.transfer_free_energy = None
         self.interface_free_energy = None
+        self.deformation_free_energy = None
+        self.steric_free_energy = None
         # Exponent is 10^-23, account for it in conversions!
         self.boltzman = 1.38064852
 
@@ -253,6 +255,18 @@ class BaseMicelle(object):
         return sigma_agg
 
     def get_steric_free_energy(self, method='VdW'):
+        '''
+        High level steric free energy getter.
+
+        Parameters
+        ----------
+        method: str, optional
+            Which method to use, by default van der Waals.
+        Returns
+        -------
+        float
+            Steric free energy in k_b * T. 
+        '''
         methods = {"VdW": self._steric_vdw}
         _free_energy_method = methods.get(method)
         if _free_energy_method is None:
@@ -268,6 +282,35 @@ class BaseMicelle(object):
         Returns a float, free energy in kT. 
         '''
     
+    def get_deformation_free_energy(self, method='nagarajan'):
+        '''
+        High level deformation free energy getter.
+
+        Parameters
+        ----------
+        method: str, optional
+            which method to use in calculation, by default nagarajan.
+
+        Returns
+        -------
+        float
+            Free energy in k_b * T.
+        '''
+        methods = {"nagarajan": self._deformation_nagarajan}
+        _free_energy_method = methods.get(method)
+        if _free_energy_method is None:
+            self._raise_not_implemented(methods)
+    
+        self.deformation_free_energy = _free_energy_method()
+        return self.deformation_free_energy
+
+    @abstractmethod
+    def _deformation_nagarajan(self):
+        '''
+        Method to calculate deformation free energy following
+        Nagarajan. Dependent on shape of micelle.
+        '''
+
     def _raise_not_implemented(self, methods):
         error_string = "Only these methods are implemented: {:s}".format(
             *methods.keys()
@@ -304,6 +347,16 @@ class SphericalMicelle(BaseMicelle):
         number and # of carbons in the tail and temperature.
         """
         return self.area_per_surfactant * self.surfactants_number
+
+    def _deformation_nagarajan(self):
+        _radius = self.radius
+        _length = self.length
+        _segment_length = self.segment_length
+
+        nom = 9. * np.pi * np.pi * _radius * _radius
+        denom = 240. * _length * _segment_length
+        
+        return nom/denom
 
     def _steric_vdw(self):
         _headgroup_area = self.headgroup_area

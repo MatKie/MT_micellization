@@ -251,4 +251,16 @@ class TestSphericalMicelleVDWStericFreeEnergy():
         calculated = mic.get_steric_free_energy()
         assert calculated > 0
 
+class TestSphericalMicelleNagarajanDeformationFreeEnergy():
+    def test_not_implemented_error_method(self):
+        """
+        Check if we throw the right errors
+        """
+        mic = micelle.SphericalMicelle(10, 298.15, 10)
+        with pytest.raises(NotImplementedError):
+            mic.get_deformation_free_energy(method="InappropriateWord")
 
+    def test_positive_value(self):
+        mic = micelle.SphericalMicelle(10, 298.15, 10, 0.49)
+        calculated = mic.get_deformation_free_energy()
+        assert calculated > 0
