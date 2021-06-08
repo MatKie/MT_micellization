@@ -89,6 +89,21 @@ class TestBaseMicelle:
         with pytest.raises(AttributeError, match="can't set attribute"):
             mic.length = 10
 
+    def test_change_headgroup_area(self):
+        mic = micelle.BaseMicelle(10, 298.15, 10)
+        mic.headgroup_area = 0.6
+        assert mic.headgroup_area == 0.6
+    
+    def test_change_headgroup_area_warning(self):
+        mic = micelle.BaseMicelle(10, 298.15, 10)
+        with pytest.warns(UserWarning):
+            mic.headgroup_area = 1.5
+    
+    def test_change_headgroup_area_error(self):
+        mic = micelle.BaseMicelle(10, 298.15, 10)
+        with pytest.raises(ValueError):
+            mic.headgroup_area = -2
+
 
 class TestBaseMicelleGetTransferFreeEnergy:
     def test_not_implemted_error(self):
@@ -210,3 +225,30 @@ class TestSphericalMicelleInterfaceFreeEnergy:
         mic = micelle.SphericalMicelle(10, 298.15, 10)
         with pytest.raises(NotImplementedError):
             mic.get_interface_free_energy(method="InappropriateWord")
+
+class TestSphericalMicelleVDWStericFreeEnergy():
+    def test_not_implemented_error_method(self):
+        """
+        Check if we throw the right errors
+        """
+        mic = micelle.SphericalMicelle(10, 298.15, 10)
+        with pytest.raises(NotImplementedError):
+            mic.get_steric_free_energy(method="InappropriateWord")
+    
+    def test_valuer_error(self):
+        '''
+        Check if we throw an error when headgroup area is too large
+        '''
+        mic = micelle.SphericalMicelle(5, 298, 3, 0.99)
+        with pytest.raises(ValueError):
+            _ = mic.get_steric_free_energy()
+
+    def test_positive_value(self):
+        '''
+        Check if we get a positive value
+        '''
+        mic = micelle.SphericalMicelle(10, 298.15, 10, 0.49)
+        calculated = mic.get_steric_free_energy()
+        assert calculated > 0
+
+

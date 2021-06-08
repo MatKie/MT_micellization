@@ -1,6 +1,6 @@
 import numpy as np
 from abc import ABC, abstractmethod
-
+import warnings
 
 class BaseMicelle(object):
     """
@@ -8,12 +8,13 @@ class BaseMicelle(object):
     between a surfactant in a micelle of certain aggregation size and
     the surfactant dispersed in an aqueous solution. 
     See:
-    S.Enders and D.Haentschel: Fluid Phase Equilibria 153 1998 1–21 Z.
+    S.Enders and D.Haentzschel: Fluid Phase Equilibria 153 1998 1–21 Z.
                                Thermodynamics
     """
 
     def __init__(
-        self, surfactants_number, temperature, tail_carbons,
+        self, surfactants_number, temperature, tail_carbons, 
+        headgroup_area=0.49
     ):
         """
         Parameters
@@ -26,7 +27,9 @@ class BaseMicelle(object):
         tail_carbons : float
             Number of carbons in the surfactant tail. Only integer 
             values are sensible, but float for sake of optimisation.
-
+        headgroup_area : float
+            Headgroup cross sectional area in nm^2. 
+            Optional, default 0.49.
         Attributes:
         -----------
 
@@ -34,6 +37,7 @@ class BaseMicelle(object):
         self.surfactants_number = surfactants_number
         self.temperature = temperature
         self.tail_carbons = tail_carbons
+        self.headgroup_area = headgroup_area
         self.transfer_free_energy = None
         self.interface_free_energy = None
         # Exponent is 10^-23, account for it in conversions!
@@ -115,7 +119,6 @@ class BaseMicelle(object):
     def tail_carbons(self):
         """
         Number of carbons in the surfactant tail.
-
         """
         return self._nt
 
@@ -125,6 +128,23 @@ class BaseMicelle(object):
             self._nt = new_nt
         else:
             raise ValueError("Tail length needs to be greater than zero.")
+
+    @property
+    def headgroup_area(self):
+        '''
+        Headgroup area for steric free energy in nm^2.
+        '''
+        return self._ap 
+
+    @headgroup_area.setter
+    def headgroup_area(self, new_ap):
+        if new_ap > 1:
+            warnings.warn(UserWarning('Headgroup area seems unusually large \
+                -- needs to be in nm^2.'))
+        if new_ap > 0:
+            self._ap = new_ap
+        else:
+            raise ValueError('Headgroup area needs to be greater than zero.')
 
     def get_transfer_free_energy(self, method="empirical"):
         """
@@ -232,6 +252,22 @@ class BaseMicelle(object):
         sigma_agg /= self.boltzman * 0.01 * self.temperature
         return sigma_agg
 
+    def get_steric_free_energy(self, method='VdW'):
+        methods = {"VdW": self._steric_vdw}
+        _free_energy_method = methods.get(method)
+        if _free_energy_method is None:
+            self._raise_not_implemented(methods)
+
+        self.steric_free_energy = _free_energy_method()
+        return self.steric_free_energy
+
+    @abstractmethod
+    def _steric_vdw(self):
+        '''
+        Steric free energy from VdW approach.
+        Returns a float, free energy in kT. 
+        '''
+    
     def _raise_not_implemented(self, methods):
         error_string = "Only these methods are implemented: {:s}".format(
             *methods.keys()
@@ -269,3 +305,11 @@ class SphericalMicelle(BaseMicelle):
         """
         return self.area_per_surfactant * self.surfactants_number
 
+    def _steric_vdw(self):
+        _headgroup_area = self.headgroup_area
+        _area_per_surfactant = self.area_per_surfactant
+        if _headgroup_area >= _area_per_surfactant:
+            raise ValueError('headgroup area larger than area \
+                per surfactant.')
+        else:
+            return -np.log(1 - (_headgroup_area / _area_per_surfactant))
