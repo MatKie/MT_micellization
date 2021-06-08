@@ -41,6 +41,13 @@ class LiteratureData(object):
         self.tension_dodecane_MT = self.read_data(
             os.path.join(datapath, "tension_dodecane_MT.csv")
         )
+        # Reinhardt Fig 5, solid black line.
+        self.delta_mu_spherical = self.read_data(
+            os.path.join(datapath, "spherical_free_energy_MT.csv")
+        )
+        self.delta_mu_spherical_full = self.read_data(
+            os.path.join(datapath, "spherical_free_energy_full_MT.csv")
+        )
 
     @staticmethod
     def read_data(path):

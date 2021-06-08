@@ -42,8 +42,67 @@ class BaseMicelle(object):
         self.interface_free_energy = None
         self.deformation_free_energy = None
         self.steric_free_energy = None
+        self.delta_chempot = None
         # Exponent is 10^-23, account for it in conversions!
         self.boltzman = 1.38064852
+
+    def get_delta_chempot(
+        self, 
+        transfer_method='empirical', 
+        interface_method='empirical',
+        curvature='flat',
+        deformation_method='nagarajan',
+        steric_method='VdW'
+        ):
+        '''
+        Call all contributions to chemical potential incentive 
+        towards micellisation and sum up. 
+        Contributions are: transfer, interface, deformation and
+                           steric.
+
+        Parameters
+        ----------
+        transfer_method: str, optional
+            Which method used to calculate transfer free energy. By 
+            defualt 'empirical'.
+        interface_method: str, optional
+            Which method used to calculate contribution from interface
+            formation. By default 'empirical'.
+        curvature: str, optional
+            Whether or not to apply a curvature correction to the
+            interface contribution. By default 'flat'.
+        deformation_method: str, optional
+            Which method to use for deformation free energy. By default
+            'nagarajan'. 
+        steric_method: str, optional
+            Which method to use for steric interactions of headgroups.
+            By default 'VdW'.
+        
+        Returns
+        -------
+        float
+            chemical potential difference in k_b * T.
+        '''
+        self.transfer_free_energy = self.get_transfer_free_energy(
+            method=transfer_method
+            )
+        self.interface_free_energy = self.get_interface_free_energy(
+            method=interface_method,
+            curvature=curvature
+            )
+        self.deformation_free_energy = self.get_deformation_free_energy(
+            method=deformation_method
+            )
+        self.steric_free_energy = self.get_steric_free_energy(
+            method=steric_method
+            )
+
+        self.delta_chempot = self.transfer_free_energy \
+                             + self.interface_free_energy \
+                             + self.deformation_free_energy \
+                             + self.steric_free_energy
+        
+        return self.delta_chempot
 
     @property
     @abstractmethod
@@ -164,11 +223,12 @@ class BaseMicelle(object):
             Transfer free energy in units of k_b*T.
         """
         methods = {"empirical": self._transfer_empirical}
-        self.transfer_free_energy = methods.get(method)
-        if self.transfer_free_energy is None:
+        _free_energy_method = methods.get(method)
+        if _free_energy_method is None:
             self._raise_not_implemented(methods)
 
-        return self.transfer_free_energy()
+        self.transfer_free_energy = _free_energy_method()
+        return self.transfer_free_energy
 
     def _transfer_empirical(self):
         """
@@ -206,11 +266,12 @@ class BaseMicelle(object):
             Interface free energy in units of k_b*T.
         """
         methods = {"flat": self._interface_flat}
-        self.interface_free_energy = methods.get(curvature)
-        if self.interface_free_energy is None:
+        _free_energy_method = methods.get(curvature)
+        if _free_energy_method is None:
             self._raise_not_implemented(methods)
 
-        return self.interface_free_energy(method=method)
+        self.interface_free_energy = _free_energy_method(method=method)
+        return self.interface_free_energy
 
     def _interface_flat(self, method="empirical"):
         """

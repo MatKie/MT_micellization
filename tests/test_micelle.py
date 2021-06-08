@@ -264,3 +264,59 @@ class TestSphericalMicelleNagarajanDeformationFreeEnergy():
         mic = micelle.SphericalMicelle(10, 298.15, 10, 0.49)
         calculated = mic.get_deformation_free_energy()
         assert calculated > 0
+
+class TestSphericalMicelleDeltaMu():
+    def test_regress_spherical_narrow(self):
+        """
+        Compare values to extracted values from Reinhardt et al.
+        delta_mu for spherical micelles at 298.15 K.
+        Aggregation sizes betwee 20 and 45
+        """
+        lit = literature.LiteratureData()
+        pub_values = lit.delta_mu_spherical
+        mic = micelle.SphericalMicelle(1, 298.15, 8)
+        fig, ax = create_fig(1, 1)
+        ax = ax[0]
+        calc_values = np.zeros(pub_values.shape)
+        for i, g in enumerate(pub_values[:, 0]):
+            mic.surfactants_number = g
+            calc_values[i, 0] = g
+            calc_values[i, 1] = mic.get_delta_chempot()
+
+        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+
+        ax.legend()
+
+        save_to_file(os.path.join(this_path, "regress_delta_mu"))
+
+        for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
+            assert calc == pytest.approx(pub, abs=0.0075)
+    
+    def test_regress_spherical_wide(self):
+        """
+        Compare values to extracted values from Reinhardt et al.
+        delta_mu for spherical micelles at 298.15 K.
+        Aggregation sizes for all given in lit.
+        """
+        lit = literature.LiteratureData()
+        pub_values = lit.delta_mu_spherical_full
+        mic = micelle.SphericalMicelle(1, 298.15, 8)
+        fig, ax = create_fig(1, 1)
+        ax = ax[0]
+        calc_values = np.zeros(pub_values.shape)
+        for i, g in enumerate(pub_values[:, 0]):
+            mic.surfactants_number = g
+            calc_values[i, 0] = g
+            calc_values[i, 1] = mic.get_delta_chempot()
+
+        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+
+        ax.legend()
+
+        save_to_file(os.path.join(this_path, "regress_delta_mu"))
+
+        for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
+            assert calc == pytest.approx(pub, abs=0.075)
+        
