@@ -320,3 +320,38 @@ class TestSphericalMicelleDeltaMu():
         for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
             assert calc == pytest.approx(pub, abs=0.075)
         
+class TestRodlikeMicelle():
+    def test_cap_to_outer_edge(self):
+        '''
+        Test if this is the same than 'a' here:
+        http://www.ambrsoft.com/TrigoCalc/Sphere/Cap/SphereCap.htm
+        '''
+        mic = micelle.RodlikeMicelle(10, 298.15, 10)
+        rs = 2.0
+        rc = 1.5
+        mic._r_sph = rs
+        mic._r_cyl = rc
+        a = np.sqrt((rs * rs) - (rc * rc))
+        assert mic.cap_to_outer_edge == pytest.approx(a, 1e-8)
+
+    def test_cap_volume(self):
+        mic = micelle.RodlikeMicelle(110, 298.15, 8)
+        rs = 1.0
+        rc = 0.9
+        mic._r_sph = rs
+        mic._r_cyl = rc
+        h = rs - mic.cap_to_outer_edge
+        volume = 2 * np.pi * h * h * (3 * rs - h) / 3.
+        calc = mic.surfactants_number_cap * mic.volume
+        assert calc == pytest.approx(volume, 1e-6)
+        
+    def test_cap_area(self):
+        mic = micelle.RodlikeMicelle(110, 298.15, 8)
+        rs = 1.0
+        rc = 0.9
+        mic._r_sph = rs
+        mic._r_cyl = rc
+        h = rs - mic.cap_to_outer_edge
+        area = 2. * 2. * np.pi * rs * h
+        calc = mic.area_per_surfactant_cap * mic.surfactants_number_cap
+        assert calc == pytest.approx(area, 1e-6)

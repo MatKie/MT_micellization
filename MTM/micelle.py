@@ -427,3 +427,77 @@ class SphericalMicelle(BaseMicelle):
                 per surfactant.')
         else:
             return -np.log(1 - (_headgroup_area / _area_per_surfactant))
+
+class RodlikeMicelle(BaseMicelle):
+    """
+    Class for the calculation of chemical potential incentive of 
+    rodlike micelles. 
+    """
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._r_sph = 1.5
+        self._r_cyl = 1.0
+
+    @property
+    def radius_sphere(self):
+        return self._r_sph
+
+    @property
+    def radius_cylinder(self):
+        return self._r_cyl
+
+    @property
+    def cap_to_outer_edge(self):
+        '''
+        Also known as capital H in Enders 1998 or 'a' in
+        http://www.ambrsoft.com/TrigoCalc/Sphere/Cap/SphereCap.htm
+        '''
+        _aux = self._r_cyl / self._r_sph
+        return self._r_sph * np.sqrt(1. - (_aux * _aux))
+
+    @property
+    def surfactants_number_cap(self):
+        H = self.cap_to_outer_edge
+        rs = self._r_sph
+        Vs = self.volume
+
+        aux = H * H * ((3. * rs) - H)
+        nom = 2. * np.pi * ((4. * rs * rs * rs) - aux)
+        denom = 3. * Vs
+
+        return nom/denom
+
+    @property
+    def surfactants_number_cyl(self):
+        return self.surfactants_number - self.surfactants_number_cap
+
+    @property
+    def cylinder_length(self):
+        nom = self.volume * self.surfactants_number_cyl
+        denom = self._r_cyl * self._r_cyl * np.pi
+
+        return nom/denom
+
+    @property 
+    def area_per_surfactant_cyl(self):
+        return 2. * np.pi * self._r_cyl * self.cylinder_length /\
+            self.surfactants_number_cyl
+        
+    @property
+    def area_per_surfactant_cap(self):
+        h = self._r_sph - self.cap_to_outer_edge
+
+        return 4. * np.pi * self._r_sph * ((2. * self._r_sph) - h)/ \
+            self.surfactants_number_cap
+
+    @property
+    def area_per_surfactant(self):
+        a_cyl = self.area_per_surfactant_cyl
+        a_cap = self.area_per_surfactant_cyl
+        g_cyl = self.surfactants_number_cyl
+        g_cap = self.surfactants_number_cap
+
+        area =  a_cyl * g_cyl + a_cap * g_cap
+
+        return area / (g_cap + g_cyl)
