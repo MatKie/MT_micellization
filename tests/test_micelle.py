@@ -447,3 +447,34 @@ class TestRodlikeMicelleFullFreeEnergy:
 
         for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
             assert calc == pytest.approx(pub, abs=0.2)
+
+
+class TestGlobularMicelleFullFreeEnergy:
+    """
+        Compare values to extracted values from Enders.
+        delta_mu for rodlike micelles at 298.15 K.
+        Aggregation sizes for all given in lit.
+        """
+
+    def test_regress_globular(self):
+        lit = literature.LiteratureData()
+        pub_values = lit.delta_mu_globular
+        mic = micelle.GlobularMicelle(40, 298, 10)
+        fig, ax = create_fig(1, 1)
+        ax = ax[0]
+        calc_values = np.zeros(pub_values.shape)
+        for i, g in enumerate(pub_values[:, 0]):
+            mic.g = g
+            calc_values[i, 0] = g
+            calc_values[i, 1] = mic.get_delta_chempot()
+
+        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+
+        ax.legend()
+
+        save_to_file(os.path.join(this_path, "regress_delta_mu_glob"))
+
+        for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
+            assert calc == pytest.approx(pub, abs=0.2)
+

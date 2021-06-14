@@ -57,6 +57,10 @@ class LiteratureData(object):
         self.delta_mu_spherical_C10 = self.read_data(
             os.path.join(datapath, "spherical_free_energy_C10_MT.csv")
         )
+        # As before, dashed lines
+        self.delta_mu_globular = self.read_data(
+            os.path.join(datapath, "globular_free_energy_C10_298.csv")
+        )
 
     @staticmethod
     def read_data(path):
