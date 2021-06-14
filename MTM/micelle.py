@@ -1,6 +1,8 @@
 import numpy as np
 from abc import ABC, abstractmethod
 import warnings
+from scipy.optimize import minimize, LinearConstraint
+
 
 class BaseMicelle(object):
     """
@@ -13,8 +15,7 @@ class BaseMicelle(object):
     """
 
     def __init__(
-        self, surfactants_number, temperature, tail_carbons, 
-        headgroup_area=0.49
+        self, surfactants_number, temperature, tail_carbons, headgroup_area=0.49
     ):
         """
         Parameters
@@ -47,14 +48,14 @@ class BaseMicelle(object):
         self.boltzman = 1.38064852
 
     def get_delta_chempot(
-        self, 
-        transfer_method='empirical', 
-        interface_method='empirical',
-        curvature='flat',
-        deformation_method='nagarajan',
-        steric_method='VdW'
-        ):
-        '''
+        self,
+        transfer_method="empirical",
+        interface_method="empirical",
+        curvature="flat",
+        deformation_method="nagarajan",
+        steric_method="VdW",
+    ):
+        """
         Call all contributions to chemical potential incentive 
         towards micellisation and sum up. 
         Contributions are: transfer, interface, deformation and
@@ -82,26 +83,25 @@ class BaseMicelle(object):
         -------
         float
             chemical potential difference in k_b * T.
-        '''
+        """
         self.transfer_free_energy = self.get_transfer_free_energy(
             method=transfer_method
-            )
+        )
         self.interface_free_energy = self.get_interface_free_energy(
-            method=interface_method,
-            curvature=curvature
-            )
+            method=interface_method, curvature=curvature
+        )
         self.deformation_free_energy = self.get_deformation_free_energy(
             method=deformation_method
-            )
-        self.steric_free_energy = self.get_steric_free_energy(
-            method=steric_method
-            )
+        )
+        self.steric_free_energy = self.get_steric_free_energy(method=steric_method)
 
-        self.delta_chempot = self.transfer_free_energy \
-                             + self.interface_free_energy \
-                             + self.deformation_free_energy \
-                             + self.steric_free_energy
-        
+        self.delta_chempot = (
+            self.transfer_free_energy
+            + self.interface_free_energy
+            + self.deformation_free_energy
+            + self.steric_free_energy
+        )
+
         return self.delta_chempot
 
     @property
@@ -192,20 +192,24 @@ class BaseMicelle(object):
 
     @property
     def headgroup_area(self):
-        '''
+        """
         Headgroup area for steric free energy in nm^2.
-        '''
-        return self._ap 
+        """
+        return self._ap
 
     @headgroup_area.setter
     def headgroup_area(self, new_ap):
         if new_ap > 1:
-            warnings.warn(UserWarning('Headgroup area seems unusually large \
-                -- needs to be in nm^2.'))
+            warnings.warn(
+                UserWarning(
+                    "Headgroup area seems unusually large \
+                -- needs to be in nm^2."
+                )
+            )
         if new_ap > 0:
             self._ap = new_ap
         else:
-            raise ValueError('Headgroup area needs to be greater than zero.')
+            raise ValueError("Headgroup area needs to be greater than zero.")
 
     def get_transfer_free_energy(self, method="empirical"):
         """
@@ -315,8 +319,8 @@ class BaseMicelle(object):
         sigma_agg /= self.boltzman * 0.01 * self.temperature
         return sigma_agg
 
-    def get_steric_free_energy(self, method='VdW'):
-        '''
+    def get_steric_free_energy(self, method="VdW"):
+        """
         High level steric free energy getter.
 
         Parameters
@@ -327,7 +331,7 @@ class BaseMicelle(object):
         -------
         float
             Steric free energy in k_b * T. 
-        '''
+        """
         methods = {"VdW": self._steric_vdw}
         _free_energy_method = methods.get(method)
         if _free_energy_method is None:
@@ -338,13 +342,13 @@ class BaseMicelle(object):
 
     @abstractmethod
     def _steric_vdw(self):
-        '''
+        """
         Steric free energy from VdW approach.
         Returns a float, free energy in kT. 
-        '''
-    
-    def get_deformation_free_energy(self, method='nagarajan'):
-        '''
+        """
+
+    def get_deformation_free_energy(self, method="nagarajan"):
+        """
         High level deformation free energy getter.
 
         Parameters
@@ -356,21 +360,21 @@ class BaseMicelle(object):
         -------
         float
             Free energy in k_b * T.
-        '''
+        """
         methods = {"nagarajan": self._deformation_nagarajan}
         _free_energy_method = methods.get(method)
         if _free_energy_method is None:
             self._raise_not_implemented(methods)
-    
+
         self.deformation_free_energy = _free_energy_method()
         return self.deformation_free_energy
 
     @abstractmethod
     def _deformation_nagarajan(self):
-        '''
+        """
         Method to calculate deformation free energy following
         Nagarajan. Dependent on shape of micelle.
-        '''
+        """
 
     def _raise_not_implemented(self, methods):
         error_string = "Only these methods are implemented: {:s}".format(
@@ -414,19 +418,22 @@ class SphericalMicelle(BaseMicelle):
         _length = self.length
         _segment_length = self.segment_length
 
-        nom = 9. * np.pi * np.pi * _radius * _radius
-        denom = 240. * _length * _segment_length
-        
-        return nom/denom
+        nom = 9.0 * np.pi * np.pi * _radius * _radius
+        denom = 240.0 * _length * _segment_length
+
+        return nom / denom
 
     def _steric_vdw(self):
         _headgroup_area = self.headgroup_area
         _area_per_surfactant = self.area_per_surfactant
         if _headgroup_area >= _area_per_surfactant:
-            raise ValueError('headgroup area larger than area \
-                per surfactant.')
+            raise ValueError(
+                "headgroup area larger than area \
+                per surfactant."
+            )
         else:
             return -np.log(1 - (_headgroup_area / _area_per_surfactant))
+
 
 class RodlikeMicelle(BaseMicelle):
     """
@@ -439,6 +446,40 @@ class RodlikeMicelle(BaseMicelle):
         self._r_sph = 1.5
         self._r_cyl = 1.0
 
+    @classmethod
+    def optimised_radii(cls, *args):
+        instance = cls(*args)
+        instance.optimise_radii()
+        return instance
+
+    def optimise_radii(self):
+
+        constraints = {
+            "type": "ineq",
+            "fun": lambda x: np.array([x[0] - x[1] - 1e6]),
+            "jac": lambda x: np.array([1.0, -1.0]),
+        }
+
+        Optim = minimize(
+            self._optimiser_func,
+            np.asarray([1.2, 1.0]),
+            bounds=((0, self.length), (0, self.length)),
+            constraints=constraints,
+        )
+        if not Optim.success and Optim.status != 8:
+            raise RuntimeError(
+                "Error in Optimisation of micelle dimension: {:s}".format(Optim.message)
+            )
+        else:
+            self._r_sph = Optim.x[0]
+            self._r_cyl = Optim.x[1]
+
+    def _optimiser_func(self, variables):
+        self._r_sph = variables[0]
+        self._r_cyl = variables[1]
+        obj_function = self.get_delta_chempot()
+        return obj_function
+
     @property
     def radius_sphere(self):
         return self._r_sph
@@ -448,25 +489,29 @@ class RodlikeMicelle(BaseMicelle):
         return self._r_cyl
 
     @property
-    def cap_to_outer_edge(self):
-        '''
-        Also known as capital H in Enders 1998 or 'a' in
+    def cap_height(self):
+        """
+        Also known as capital H in Enders 1998 or 'h' in
         http://www.ambrsoft.com/TrigoCalc/Sphere/Cap/SphereCap.htm
-        '''
+        There actually is a typo in Enders original work. The correct
+        calculation is also given in Nagarajan 1991:
+
+        H = r_s * (1 - sqrt(1-rc^2/rs^2))
+        """
         _aux = self._r_cyl / self._r_sph
-        return self._r_sph * np.sqrt(1. - (_aux * _aux))
+        return self._r_sph * (1.0 - np.sqrt(1.0 - (_aux * _aux)))
 
     @property
     def surfactants_number_cap(self):
-        H = self.cap_to_outer_edge
+        H = self.cap_height
         rs = self._r_sph
         Vs = self.volume
 
-        aux = H * H * ((3. * rs) - H)
-        nom = 2. * np.pi * ((4. * rs * rs * rs) - aux)
-        denom = 3. * Vs
+        aux = H * H * ((3.0 * rs) - H)
+        nom = 2.0 * np.pi * ((4.0 * rs * rs * rs) - aux)
+        denom = 3.0 * Vs
 
-        return nom/denom
+        return nom / denom
 
     @property
     def surfactants_number_cyl(self):
@@ -477,27 +522,102 @@ class RodlikeMicelle(BaseMicelle):
         nom = self.volume * self.surfactants_number_cyl
         denom = self._r_cyl * self._r_cyl * np.pi
 
-        return nom/denom
+        return nom / denom
 
-    @property 
+    @property
     def area_per_surfactant_cyl(self):
-        return 2. * np.pi * self._r_cyl * self.cylinder_length /\
-            self.surfactants_number_cyl
-        
+        return (
+            2.0
+            * np.pi
+            * self._r_cyl
+            * self.cylinder_length
+            / self.surfactants_number_cyl
+        )
+
     @property
     def area_per_surfactant_cap(self):
-        h = self._r_sph - self.cap_to_outer_edge
+        h = self.cap_height
 
-        return 4. * np.pi * self._r_sph * ((2. * self._r_sph) - h)/ \
-            self.surfactants_number_cap
+        return (
+            4.0
+            * np.pi
+            * self._r_sph
+            * ((2.0 * self._r_sph) - h)
+            / self.surfactants_number_cap
+        )
 
     @property
     def area_per_surfactant(self):
         a_cyl = self.area_per_surfactant_cyl
-        a_cap = self.area_per_surfactant_cyl
+        a_cap = self.area_per_surfactant_cap
         g_cyl = self.surfactants_number_cyl
         g_cap = self.surfactants_number_cap
 
-        area =  a_cyl * g_cyl + a_cap * g_cap
+        area = (a_cyl * g_cyl) + (a_cap * g_cap)
 
         return area / (g_cap + g_cyl)
+
+    def _deformation_nagarajan(self):
+        deformation_cyl = self._deformation_nagarajan_cyl()
+        deformation_sph = self._deformation_nagarajan_sph()
+
+        return deformation_cyl + deformation_sph
+
+    def _deformation_nagarajan_cyl(self):
+        _rc = self._r_cyl
+        _length = self.length
+        _segment_length = self.segment_length
+
+        nom = 5.0 * np.pi * np.pi * _rc * _rc
+        denom = 80.0 * _length * _segment_length
+
+        return nom / denom
+
+    def _deformation_nagarajan_sph(self):
+        _rs = self._r_sph
+        _length = self.length
+        _segment_length = self.segment_length
+        _volume = self.volume
+        _a = self.area_per_surfactant_cap
+
+        nom = 9.0 * _volume * np.pi * np.pi * _rs
+        denom = 80.0 * _length * _segment_length * _a
+
+        return nom / denom
+
+    def _steric_vdw(self):
+        _cap = self._steric_sph()
+        _cyl = self._steric_cyl()
+
+        return _cap + _cyl
+
+    def _steric_sph(self):
+        _headgroup_area = self.headgroup_area
+        _area_per_surfactant = self.area_per_surfactant_cap
+        _nr_surfactants = self.surfactants_number
+        _nr_surfactants_portion = self.surfactants_number_cap
+        if _headgroup_area >= _area_per_surfactant:
+            return 500
+            # raise ValueError(
+            #    "headgroup area larger than area \
+            #    per surfactant."
+            # )
+        else:
+            ratio = _nr_surfactants_portion / _nr_surfactants
+            return ratio * -np.log(1 - (_headgroup_area / _area_per_surfactant))
+
+    def _steric_cyl(self):
+        _headgroup_area = self.headgroup_area
+        _area_per_surfactant = self.area_per_surfactant_cyl
+        _nr_surfactants = self.surfactants_number
+        _nr_surfactants_portion = self.surfactants_number_cyl
+        if _headgroup_area >= _area_per_surfactant:
+            return 500
+            # raise ValueError(
+            #    "headgroup area larger than area \
+            #    per surfactant."
+            # )
+        else:
+            ratio = _nr_surfactants_portion / _nr_surfactants
+            return ratio * -np.log(1 - (_headgroup_area / _area_per_surfactant))
+

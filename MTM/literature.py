@@ -45,8 +45,17 @@ class LiteratureData(object):
         self.delta_mu_spherical = self.read_data(
             os.path.join(datapath, "spherical_free_energy_MT.csv")
         )
+        # As above extended range
         self.delta_mu_spherical_full = self.read_data(
             os.path.join(datapath, "spherical_free_energy_full_MT.csv")
+        )
+        # Enders Fig 2, dotted line
+        self.delta_mu_rodlike_full = self.read_data(
+            os.path.join(datapath, "rodlike_free_energy_C10_MT.csv")
+        )
+        # Enders Fig 2, solid line
+        self.delta_mu_spherical_C10 = self.read_data(
+            os.path.join(datapath, "spherical_free_energy_C10_MT.csv")
         )
 
     @staticmethod

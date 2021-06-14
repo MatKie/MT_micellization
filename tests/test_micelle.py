@@ -93,12 +93,12 @@ class TestBaseMicelle:
         mic = micelle.BaseMicelle(10, 298.15, 10)
         mic.headgroup_area = 0.6
         assert mic.headgroup_area == 0.6
-    
+
     def test_change_headgroup_area_warning(self):
         mic = micelle.BaseMicelle(10, 298.15, 10)
         with pytest.warns(UserWarning):
             mic.headgroup_area = 1.5
-    
+
     def test_change_headgroup_area_error(self):
         mic = micelle.BaseMicelle(10, 298.15, 10)
         with pytest.raises(ValueError):
@@ -226,7 +226,8 @@ class TestSphericalMicelleInterfaceFreeEnergy:
         with pytest.raises(NotImplementedError):
             mic.get_interface_free_energy(method="InappropriateWord")
 
-class TestSphericalMicelleVDWStericFreeEnergy():
+
+class TestSphericalMicelleVDWStericFreeEnergy:
     def test_not_implemented_error_method(self):
         """
         Check if we throw the right errors
@@ -234,24 +235,25 @@ class TestSphericalMicelleVDWStericFreeEnergy():
         mic = micelle.SphericalMicelle(10, 298.15, 10)
         with pytest.raises(NotImplementedError):
             mic.get_steric_free_energy(method="InappropriateWord")
-    
+
     def test_valuer_error(self):
-        '''
+        """
         Check if we throw an error when headgroup area is too large
-        '''
+        """
         mic = micelle.SphericalMicelle(5, 298, 3, 0.99)
         with pytest.raises(ValueError):
             _ = mic.get_steric_free_energy()
 
     def test_positive_value(self):
-        '''
+        """
         Check if we get a positive value
-        '''
+        """
         mic = micelle.SphericalMicelle(10, 298.15, 10, 0.49)
         calculated = mic.get_steric_free_energy()
         assert calculated > 0
 
-class TestSphericalMicelleNagarajanDeformationFreeEnergy():
+
+class TestSphericalMicelleNagarajanDeformationFreeEnergy:
     def test_not_implemented_error_method(self):
         """
         Check if we throw the right errors
@@ -265,7 +267,8 @@ class TestSphericalMicelleNagarajanDeformationFreeEnergy():
         calculated = mic.get_deformation_free_energy()
         assert calculated > 0
 
-class TestSphericalMicelleDeltaMu():
+
+class TestSphericalMicelleDeltaMu:
     def test_regress_spherical_narrow(self):
         """
         Compare values to extracted values from Reinhardt et al.
@@ -292,7 +295,7 @@ class TestSphericalMicelleDeltaMu():
 
         for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
             assert calc == pytest.approx(pub, abs=0.0075)
-    
+
     def test_regress_spherical_wide(self):
         """
         Compare values to extracted values from Reinhardt et al.
@@ -319,20 +322,47 @@ class TestSphericalMicelleDeltaMu():
 
         for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
             assert calc == pytest.approx(pub, abs=0.075)
-        
-class TestRodlikeMicelle():
-    def test_cap_to_outer_edge(self):
-        '''
-        Test if this is the same than 'a' here:
+
+    def test_regress_spherical_C10(self):
+        """
+        Compare values to extracted values from Reinhardt et al.
+        delta_mu for spherical micelles at 298.15 K.
+        Aggregation sizes for all given in lit.
+        """
+        lit = literature.LiteratureData()
+        pub_values = lit.delta_mu_spherical_C10
+        mic = micelle.SphericalMicelle(1, 298.00, 10)
+        fig, ax = create_fig(1, 1)
+        ax = ax[0]
+        calc_values = np.zeros(pub_values.shape)
+        for i, g in enumerate(pub_values[:, 0]):
+            mic.surfactants_number = g
+            calc_values[i, 0] = g
+            calc_values[i, 1] = mic.get_delta_chempot()
+
+        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+
+        ax.legend()
+
+        save_to_file(os.path.join(this_path, "regress_delta_mu_sph_C10"))
+
+        for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
+            assert calc == pytest.approx(pub, abs=0.1)
+
+
+class TestRodlikeMicelle:
+    def test_cap_height(self):
+        """
+        Test if this is the same than 'h' here:
         http://www.ambrsoft.com/TrigoCalc/Sphere/Cap/SphereCap.htm
-        '''
+        """
         mic = micelle.RodlikeMicelle(10, 298.15, 10)
         rs = 2.0
         rc = 1.5
         mic._r_sph = rs
         mic._r_cyl = rc
-        a = np.sqrt((rs * rs) - (rc * rc))
-        assert mic.cap_to_outer_edge == pytest.approx(a, 1e-8)
+        assert mic.cap_height == pytest.approx(0.68, abs=1e-2)
 
     def test_cap_volume(self):
         mic = micelle.RodlikeMicelle(110, 298.15, 8)
@@ -340,18 +370,80 @@ class TestRodlikeMicelle():
         rc = 0.9
         mic._r_sph = rs
         mic._r_cyl = rc
-        h = rs - mic.cap_to_outer_edge
-        volume = 2 * np.pi * h * h * (3 * rs - h) / 3.
+        volume = 8.0 / 3.0 * np.pi * rs ** 3 - 1.62
         calc = mic.surfactants_number_cap * mic.volume
-        assert calc == pytest.approx(volume, 1e-6)
-        
+        assert calc == pytest.approx(volume, abs=1e-2)
+
     def test_cap_area(self):
         mic = micelle.RodlikeMicelle(110, 298.15, 8)
         rs = 1.0
         rc = 0.9
         mic._r_sph = rs
         mic._r_cyl = rc
-        h = rs - mic.cap_to_outer_edge
-        area = 2. * 2. * np.pi * rs * h
+        area = 8.0 * np.pi * rs ** 2 - 7.08
         calc = mic.area_per_surfactant_cap * mic.surfactants_number_cap
-        assert calc == pytest.approx(area, 1e-6)
+        assert calc == pytest.approx(area, abs=1e-2)
+
+    def test_sum_g(self):
+        for g in range(1, 300):
+            mic = micelle.RodlikeMicelle(g, 298.15, 8)
+            g_cap = mic.surfactants_number_cap
+            g_cyl = mic.surfactants_number_cyl
+            assert (g_cap + g_cyl) == pytest.approx(g)
+
+
+class TestRodlikeMicelleVDWStericFreeEnergy:
+    def test_positive_value(self):
+        """
+        Check if we get a positive value
+        """
+        mic = micelle.RodlikeMicelle(100, 298.15, 10, 0.49)
+        calculated = mic.get_steric_free_energy()
+        assert calculated > 0
+
+
+class TestRodlikeMicelleNagarajanDeformationFreeEnergy:
+    def test_positive_value(self):
+        mic = micelle.RodlikeMicelle(10, 298.15, 10, 0.49)
+        calculated = mic.get_deformation_free_energy()
+        assert calculated > 0
+
+
+class TestRodlikeMicelleOptimiseRadii:
+    def test_optimise_micelle(self):
+        mic = micelle.RodlikeMicelle(125, 298.15, 10)
+        rc, rs = mic.radius_cylinder, mic.radius_sphere
+        mic.optimise_radii()
+        assert mic.radius_cylinder < mic.radius_sphere
+        assert rc != mic.radius_cylinder
+        assert rs != mic.radius_sphere
+
+
+class TestRodlikeMicelleFullFreeEnergy:
+    def test_regress_rodlike(self):
+        """
+        Compare values to extracted values from Enders.
+        delta_mu for rodlike micelles at 298.15 K.
+        Aggregation sizes for all given in lit.
+        """
+        lit = literature.LiteratureData()
+        pub_values = lit.delta_mu_rodlike_full
+        mic = micelle.RodlikeMicelle.optimised_radii(125, 298, 10)
+        fig, ax = create_fig(1, 1)
+        ax = ax[0]
+        calc_values = np.zeros(pub_values.shape)
+        for i, g in enumerate(pub_values[:, 0]):
+            mic.g = g
+            mic.optimise_radii()
+            calc_values[i, 0] = g
+            calc_values[i, 1] = mic.get_delta_chempot()
+
+        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+
+        ax.legend()
+
+        save_to_file(os.path.join(this_path, "regress_delta_mu_rod"))
+
+        for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
+            assert calc == pytest.approx(pub, abs=0.2)
