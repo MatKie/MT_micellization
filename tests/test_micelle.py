@@ -3,13 +3,11 @@ import sys
 import numpy as np
 import os
 from mkutils import create_fig, save_to_file
-from MTM import micelle
 from MTM import literature
+import MTM.micelles as micelle
 
 sys.path.append("../")
 this_path = os.path.dirname(__file__)
-from MTM import micelle
-from MTM import literature
 
 
 class TestBaseMicelle:
