@@ -61,6 +61,18 @@ class LiteratureData(object):
         self.delta_mu_globular = self.read_data(
             os.path.join(datapath, "globular_free_energy_C10_298.csv")
         )
+        # As before, dash-dot lines
+        self.delta_mu_bilayer_vesicle = self.read_data(
+            os.path.join(datapath, "vesicle_free_energy_C10_298.csv")
+        )
+        # Reinhardt Fig 4b, black line
+        self.interface_bilayer_vesicle_C8 = self.read_data(
+            os.path.join(datapath, "interface_bil_ves_C8_298.csv")
+        )
+        # Reinhardt Fig 4b, grey line
+        self.interface_bilayer_vesicle_C8_330 = self.read_data(
+            os.path.join(datapath, "interface_bil_ves_C8_330.csv")
+        )
 
     @staticmethod
     def read_data(path):
