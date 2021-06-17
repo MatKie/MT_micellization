@@ -6,18 +6,19 @@ from scipy.optimize import minimize, LinearConstraint
 
 class RodlikeMicelle(BaseMicelle):
     """
-    Class for the calculation of chemical potential incentive of 
-    rodlike micelles. 
+    Class for the calculation of chemical potential incentive of
+    rodlike micelles.
     """
 
-    def __init__(self, *args):
+    def __init__(self, *args, throw_errors=True):
         super().__init__(*args)
         self._r_sph = 1.5
         self._r_cyl = 1.0
+        self.throw_errors = throw_errors
 
     @classmethod
-    def optimised_radii(cls, *args):
-        instance = cls(*args)
+    def optimised_radii(cls, *args, **kwargs):
+        instance = cls(*args, **kwargs)
         instance.optimise_radii()
         return instance
 
@@ -35,10 +36,14 @@ class RodlikeMicelle(BaseMicelle):
             bounds=((0, self.length), (0, self.length)),
             constraints=constraints,
         )
-        if not Optim.success and Optim.status != 8:
-            raise RuntimeError(
-                "Error in Optimisation of micelle dimension: {:s}".format(Optim.message)
+
+        if not Optim.success:  # and Optim.status != 8:
+            errmsg = "Error in Optimisation of micelle dimension: {:s}".format(
+                Optim.message
             )
+            if self.throw_errors:
+                raise RuntimeError(errmsg)
+            warnings.warn(errmsg)
         else:
             self._r_sph = Optim.x[0]
             self._r_cyl = Optim.x[1]
@@ -47,6 +52,8 @@ class RodlikeMicelle(BaseMicelle):
         self._r_sph = variables[0]
         self._r_cyl = variables[1]
         obj_function = self.get_delta_chempot()
+        if self.area_per_surfactant < 0 or self.surfactants_number_cyl < 0:
+            obj_function = 100
         return obj_function
 
     @property

@@ -141,7 +141,7 @@ class TestSphericalMicelleInterfaceFreeEnergy:
     def test_regress_tension_dodecane(self):
         """
         Compare values to extracted values from Reinhardt et al.
-        interfacial tension of n-dodecane - water at room temp. 
+        interfacial tension of n-dodecane - water at room temp.
         """
         lit = literature.LiteratureData()
         pub_values = lit.tension_dodecane_MT
@@ -168,8 +168,8 @@ class TestSphericalMicelleInterfaceFreeEnergy:
     def test_regress_interface_free_energy_298(self):
         """
         Compare values to extracted values from Reinhardt et al.
-        Interfacial free energy of an octyl tail at room temp over 
-        various agg. sizes. 
+        Interfacial free energy of an octyl tail at room temp over
+        various agg. sizes.
         """
         lit = literature.LiteratureData()
         pub_values = lit.interface_sph_298_MT
@@ -195,8 +195,8 @@ class TestSphericalMicelleInterfaceFreeEnergy:
     def test_regress_interface_free_energy_330(self):
         """
         Compare values to extracted values from Reinhardt et al.
-        Interfacial free energy of an octyl tail at 330 K over 
-        various agg. sizes. 
+        Interfacial free energy of an octyl tail at 330 K over
+        various agg. sizes.
         """
         lit = literature.LiteratureData()
         pub_values = lit.interface_sph_330_MT
@@ -424,7 +424,7 @@ class TestRodlikeMicelleNagarajanDeformationFreeEnergy:
 
 class TestRodlikeMicelleOptimiseRadii:
     def test_optimise_micelle(self):
-        mic = micelle.RodlikeMicelle(125, 298.15, 10)
+        mic = micelle.RodlikeMicelle(125, 298.15, 10, throw_errors=False)
         rc, rs = mic.radius_cylinder, mic.radius_sphere
         mic.optimise_radii()
         assert mic.radius_cylinder < mic.radius_sphere
@@ -441,12 +441,12 @@ class TestRodlikeMicelleFullFreeEnergy:
         """
         lit = literature.LiteratureData()
         pub_values = lit.delta_mu_rodlike_full
-        mic = micelle.RodlikeMicelle.optimised_radii(125, 298, 10)
+        mic = micelle.RodlikeMicelle.optimised_radii(125, 298, 10, throw_errors=False)
         fig, ax = create_fig(1, 1)
         ax = ax[0]
         calc_values = np.zeros(pub_values.shape)
         for i, g in enumerate(pub_values[:, 0]):
-            mic.g = g
+            mic.surfactants_number = g
             mic.optimise_radii()
             calc_values[i, 0] = g
             calc_values[i, 1] = mic.get_delta_chempot()
@@ -454,6 +454,7 @@ class TestRodlikeMicelleFullFreeEnergy:
         ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
         ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
 
+        ax.set_ylim(min(pub_values[:, 1]) - 1, max(pub_values[:, 1]) + 2)
         ax.legend()
 
         save_to_file(os.path.join(this_path, "regress_delta_mu_rod"))
@@ -461,13 +462,17 @@ class TestRodlikeMicelleFullFreeEnergy:
         for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
             assert calc == pytest.approx(pub, abs=0.2)
 
+        mean = calc_mean_of_deviation(calc_values[:, 1], pub_values[:, 1])
+
+        assert mean < 0.005
+
 
 class TestGlobularMicelleFullFreeEnergy:
     """
-        Compare values to extracted values from Enders.
-        delta_mu for rodlike micelles at 298.15 K.
-        Aggregation sizes for all given in lit.
-        """
+    Compare values to extracted values from Enders.
+    delta_mu for rodlike micelles at 298.15 K.
+    Aggregation sizes for all given in lit.
+    """
 
     def test_regress_globular(self):
         lit = literature.LiteratureData()
