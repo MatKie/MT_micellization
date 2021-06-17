@@ -6,8 +6,8 @@ from scipy.optimize import minimize
 
 class BilayerVesicle(BaseMicelle):
     """
-    Class for the calculation of chemical potential incentive of 
-    bilayer vesicle micelles. Follows Enders and Haentzschel 1998.  
+    Class for the calculation of chemical potential incentive of
+    bilayer vesicle micelles. Follows Enders and Haentzschel 1998.
     """
 
     def __init__(self, *args, throw_errors=True):
@@ -45,7 +45,7 @@ class BilayerVesicle(BaseMicelle):
         Raises
         ------
         RuntimeError / or warning
-            If optimisation is not successful             
+            If optimisation is not successful
         """
         starting_values = np.asarray(self._starting_values())
 
@@ -73,11 +73,13 @@ class BilayerVesicle(BaseMicelle):
         self._r_out = variables[0]
         self._t_out = variables[1]
         obj_function = self.get_delta_chempot()
+        if self.surfactants_number_outer < 0 or self.surfactants_number_inner < 0:
+            obj_function = 100
         return obj_function
 
     def _starting_values(self):
         """
-        Starting values for optimisation. 
+        Starting values for optimisation.
 
         Outer radius and thickness are set so that half of the surfactant
         is in the outer/inner layer and the inside surface area per surfactant is 10% higher than the headgroup area.
@@ -122,7 +124,7 @@ class BilayerVesicle(BaseMicelle):
     def radius_inner(self):
         """
         Determined via the volume needed and the given outer radius.
-        
+
         Returns
         -------
         float
@@ -142,7 +144,7 @@ class BilayerVesicle(BaseMicelle):
     def surfactants_number_outer(self):
         """
         Given by the volume between sphere with outer radius and outer
-        radius minus outer thickness. 
+        radius minus outer thickness.
 
         Returns
         -------
@@ -262,10 +264,14 @@ class BilayerVesicle(BaseMicelle):
         float
             surfactant weighted deformation free energy.
         """
+        _surfactant_number = self.surfactants_number
+        _g_out = self.surfactants_number_outer
+        factor_out = _g_out / _surfactant_number
+        factor_in = 1.0 - factor_out
         deformation_in = self._deformation_nagarajan_in()
         deformation_out = self._deformation_nagarajan_out()
 
-        return deformation_in + deformation_out
+        return factor_in * deformation_in + factor_out * deformation_out
 
     def _deformation_nagarajan_out(self):
         """
