@@ -134,10 +134,14 @@ class RodlikeMicelle(BaseMicelle):
         return area / (g_cap + g_cyl)
 
     def _deformation_nagarajan(self):
+        _surfactants_number = self.surfactants_number
+        _g_cap = self.surfactants_number_cap
+        factor_cap = _g_cap / _surfactants_number
+        factor_cyl = 1.0 - factor_cap
         deformation_cyl = self._deformation_nagarajan_cyl()
         deformation_sph = self._deformation_nagarajan_sph()
 
-        return deformation_cyl + deformation_sph
+        return factor_cyl * deformation_cyl + factor_cap * deformation_sph
 
     def _deformation_nagarajan_cyl(self):
         _rc = self._r_cyl
