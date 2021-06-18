@@ -22,19 +22,21 @@ class RodlikeMicelle(BaseMicelle):
         instance.optimise_radii()
         return instance
 
-    def optimise_radii(self):
+    def optimise_radii(self, x_0=[1.3, 1.0]):
 
         constraints = {
             "type": "ineq",
-            "fun": lambda x: np.array([x[0] - x[1] - 1e6]),
+            "fun": lambda x: np.array([x[0] - x[1] - 1e8]),
             "jac": lambda x: np.array([1.0, -1.0]),
         }
 
+        upper_bound = self.length
         Optim = minimize(
             self._optimiser_func,
-            np.asarray([1.2, 1.0]),
-            bounds=((0, self.length), (0, self.length)),
+            np.asarray(x_0),
+            bounds=((0, upper_bound), (0, upper_bound)),
             constraints=constraints,
+            options={"ftol": 1e-8},
         )
 
         if not Optim.success:  # and Optim.status != 8:
@@ -53,7 +55,7 @@ class RodlikeMicelle(BaseMicelle):
         self._r_cyl = variables[1]
         obj_function = self.get_delta_chempot()
         if self.area_per_surfactant < 0 or self.surfactants_number_cyl < 0:
-            obj_function = 100
+            obj_function = 1
         return obj_function
 
     @property
@@ -177,7 +179,7 @@ class RodlikeMicelle(BaseMicelle):
         _nr_surfactants = self.surfactants_number
         _nr_surfactants_portion = self.surfactants_number_cap
         if _headgroup_area >= _area_per_surfactant:
-            return 500
+            return 10
             # raise ValueError(
             #    "headgroup area larger than area \
             #    per surfactant."
@@ -192,7 +194,7 @@ class RodlikeMicelle(BaseMicelle):
         _nr_surfactants = self.surfactants_number
         _nr_surfactants_portion = self.surfactants_number_cyl
         if _headgroup_area >= _area_per_surfactant:
-            return 500
+            return 10
             # raise ValueError(
             #    "headgroup area larger than area \
             #    per surfactant."
