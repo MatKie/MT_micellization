@@ -30,11 +30,13 @@ class RodlikeMicelle(BaseMicelle):
             "fun": lambda x: np.array([x[0] - x[1] - 1e8]),
             "jac": lambda x: np.array([1.0, -1.0]),
         }
+        Derivatives = RodlikeMicelleDerivative(self)
 
         upper_bound = self.length
         Optim = minimize(
             self._optimiser_func,
             np.asarray(x_0),
+            jac=Derivatives.jacobian,
             bounds=((0, upper_bound), (0, upper_bound)),
             constraints=constraints,
             options={"ftol": 1e-8},

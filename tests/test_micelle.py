@@ -450,7 +450,7 @@ class TestRodlikeMicelleFullFreeEnergy:
         calc_values = np.zeros(pub_values.shape)
         for i, g in enumerate(pub_values[:, 0]):
             mic.surfactants_number = g
-            mic.optimise_radii()
+            mic.optimise_radii([1.3, 1.0])
             calc_values[i, 0] = g
             calc_values[i, 1] = mic.get_delta_chempot()
 
@@ -489,6 +489,22 @@ class TestRodlikeMicelleFullFreeEnergy:
                 try:
                     assert i_plus_1 - i < 1e-8
                 except AssertionError:
+                    lit = literature.LiteratureData()
+                    pub_values = lit.delta_mu_rodlike_full
+                    fig, ax = create_fig(1, 1)
+                    ax = ax[0]
+                    ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
+                    ax.plot(gs, calc_values, label="calc")
+
+                    ax.set_ylim(min(pub_values[:, 1]) - 1, max(pub_values[:, 1]) + 2)
+                    ax.legend()
+
+                    save_to_file(
+                        os.path.join(
+                            this_path,
+                            "regress_delta_mu_rod_{:.1f}_{:.1f}".format(*x_0),
+                        )
+                    )
                     raise AssertionError(
                         f"Unsteadiness with starting values \
                         {x_0}: {i_plus_1} - {i}"

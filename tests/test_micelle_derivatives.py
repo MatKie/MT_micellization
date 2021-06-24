@@ -35,11 +35,10 @@ class TestRodlikeMicelleDerivativeAbsoluteDifferences:
         self.mic = micelle.RodlikeMicelle.optimised_radii(
             80, 298.15, 10, throw_errors=False
         )
-        self.mic._r_sph += 0.1
-        self.mic._r_cyl -= 0.1
-        self.d_mic = RodlikeMicelleDerivative(
-            self.mic, self.mic.radius_sphere, self.mic.radius_cylinder
-        )
+        self.mic._r_sph = 1.4253230064568438
+        self.mic._r_cyl = 0.9254915532794837
+        # self.d_mic = RodlikeMicelleDerivative(self.mic)
+        self.d_mic = RodlikeMicelleDerivative(self.mic)
 
     def test_cap_height_deriv_wrt_r_sph(self):
         self.setup()

@@ -2,10 +2,12 @@ import numpy as np
 
 
 class RodlikeMicelleDerivative(object):
-    def __init__(self, base_micelle, r_sphere, r_cylinder):
+    def __init__(self, base_micelle, r_sph=None, r_cyl=None):
         self.base_micelle = base_micelle
-        self._r_sph = r_sphere
-        self._r_cyl = r_cylinder
+        if r_sph is not None:
+            self._r_sph = r_sph
+        if r_cyl is not None:
+            self._r_cyl = r_cyl
 
     @property
     def deriv_cap_height_wrt_r_sph(self):
@@ -394,7 +396,9 @@ class RodlikeMicelleDerivative(object):
 
         return sigma * d_area_drc
 
-    def jacobian(self):
+    def jacobian(self, x=None):
+        if x is not None:
+            self._r_sph, self._r_cyl = x[0], x[1]
         # rsph
         sph_steric = self.deriv_steric_vdw_wrt_r_sph()
         sph_deform = self.deriv_deformation_nagarajan_wrt_r_sph()
