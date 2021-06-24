@@ -2,6 +2,7 @@ from .base_micelle import BaseMicelle
 import numpy as np
 import warnings
 from scipy.optimize import minimize, LinearConstraint
+from ._rodlike_derivative import RodlikeMicelleDerivative
 
 
 class RodlikeMicelle(BaseMicelle):

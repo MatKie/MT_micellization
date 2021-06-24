@@ -1,3 +1,6 @@
+from MTM.micelles.rodlike_micelle import RodlikeMicelle
+from MTM.micelles._rodlike_derivative import RodlikeMicelleDerivative
+from numpy.core.numeric import roll
 import pytest
 import sys
 import numpy as np
@@ -494,6 +497,63 @@ class TestRodlikeMicelleFullFreeEnergy:
         run_and_assert([1.3, 1.0])
         run_and_assert([1.2, 1.0])
         run_and_assert([1.0, 0.8])
+
+
+def absolute_difference(mic, mic_prop, mic_fun, h=1e-8):
+    org_value = mic_fun(mic)
+    mic_prop(mic, h)
+    new_value = mic_fun(mic)
+
+    deriv = (new_value - org_value) / h
+    return deriv
+
+
+def update_sph(mic, h):
+    mic._r_sph += h
+
+
+def update_cyl(mic, h):
+    mic._r_cyl += h
+
+
+class TestRodlikeMicelleDerivativeAbsoluteDifferences:
+    def test_cap_height_deriv_wrt_r_sph(self):
+        mic = micelle.RodlikeMicelle.optimised_radii(80, 298.15, 10, throw_errors=False)
+        mic._r_sph += 0.1
+        mic._r_cyl -= 0.1
+        d_mic = RodlikeMicelleDerivative(mic, mic.radius_sphere, mic.radius_cylinder)
+
+        ana_deriv = d_mic.deriv_cap_height_wrt_r_sph
+
+        num_deriv = absolute_difference(mic, update_sph, lambda x: x.cap_height)
+
+        assert ana_deriv == pytest.approx(num_deriv, abs=1e-7)
+
+    def test_cap_height_deriv_wrt_r_cyl(self):
+        mic = micelle.RodlikeMicelle.optimised_radii(80, 298.15, 10, throw_errors=False)
+        mic._r_sph += 0.1
+        mic._r_cyl -= 0.1
+        d_mic = RodlikeMicelleDerivative(mic, mic.radius_sphere, mic.radius_cylinder)
+
+        ana_deriv = d_mic.deriv_cap_height_wrt_r_cyl
+
+        num_deriv = absolute_difference(mic, update_cyl, lambda x: x.cap_height)
+
+        assert ana_deriv == pytest.approx(num_deriv, abs=1e-7)
+
+    def test_interface_deriv_wrt_r_cyl(self):
+        mic = micelle.RodlikeMicelle.optimised_radii(80, 298.15, 10, throw_errors=False)
+        mic._r_sph += 0.1
+        mic._r_cyl -= 0.1
+        d_mic = RodlikeMicelleDerivative(mic, mic.radius_sphere, mic.radius_cylinder)
+
+        ana_deriv = d_mic.deriv_interface_free_energy_wrt_r_cyl()
+
+        num_deriv = absolute_difference(
+            mic, update_cyl, lambda x: x.get_interface_free_energy()
+        )
+
+        assert ana_deriv == pytest.approx(num_deriv, abs=1e-7)
 
 
 class TestGlobularMicelleFullFreeEnergy:

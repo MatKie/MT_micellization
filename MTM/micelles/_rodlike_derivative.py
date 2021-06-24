@@ -2,7 +2,7 @@ import numpy as np
 
 
 class RodlikeMicelleDerivative(object):
-    def __init__(self, base_micelle, r_sphere, r_cylinder, self):
+    def __init__(self, base_micelle, r_sphere, r_cylinder):
         self.base_micelle = base_micelle
         self._r_sph = r_sphere
         self._r_cyl = r_cylinder
@@ -17,13 +17,12 @@ class RodlikeMicelleDerivative(object):
         rc_sq = rc * rc
         rs_sq = rs * rs
 
-        ratio_sq = (rc_sq / rs_sq) * (rc_sq / rs_sq)
+        ratio_sq = rc_sq / rs_sq
 
         term_1 = 1.0 - np.sqrt(1.0 - ratio_sq)
-        term_2 = -0.5 * (1.0 - ratio_sq) ** 0.5
-        term_3 = 2.0 * rc_sq / rs
+        term_2 = -1.0 * ratio_sq / np.sqrt(1.0 - ratio_sq)
 
-        return term_1 + rs * (term_2 + term_3)
+        return term_1 + term_2
 
     @property
     def deriv_cap_height_wrt_r_cyl(self):
@@ -35,12 +34,11 @@ class RodlikeMicelleDerivative(object):
         rc_sq = rc * rc
         rs_sq = rs * rs
 
-        ratio_sq = (rc_sq / rs_sq) * (rc_sq / rs_sq)
+        ratio_sq = rc_sq / rs_sq
 
-        term_2 = -0.5 * (1.0 - ratio_sq) ** 0.5
-        term_3 = 2.0 * rc / rs_sq
+        term_1 = rc / (rs * np.sqrt(1.0 - ratio_sq))
 
-        return rs * (term_2 + term_3)
+        return term_1
 
     @property
     def deriv_surfactants_number_cap_wrt_r_sph(self):
@@ -55,7 +53,7 @@ class RodlikeMicelleDerivative(object):
         prefac = 2.0 * np.pi / (3.0 * volume)
         term_1 = 12.0 * rs * rs
         term_2 = -2.0 * H * dH_drs * (3.0 * rs * rs * rs - H)
-        term_3 = -1.0 * H * H(3.0 - dH_drs)
+        term_3 = -1.0 * H * H * (3.0 - dH_drs)
 
         return prefac * (term_1 + term_2 + term_3)
 
@@ -72,7 +70,7 @@ class RodlikeMicelleDerivative(object):
         prefac = 2.0 * np.pi / (3.0 * volume)
         term_1 = 0.0
         term_2 = -2.0 * H * dH_drc * (3.0 * rs * rs * rs - H)
-        term_3 = -1.0 * H * H(-1.0 * dH_drc)
+        term_3 = -1.0 * H * H*(-1.0 * dH_drc)
 
         return prefac * (term_1 + term_2 + term_3)
 
@@ -194,7 +192,7 @@ class RodlikeMicelleDerivative(object):
         da_cyl_drs = self.deriv_area_per_surfactant_cyl_wrt_r_sph
         a_cap = self.base_micelle.area_per_surfactant_cap
         da_cap_drs = self.deriv_area_per_surfactant_cap_wrt_r_sph
-        g_cyl = self.base_micelle.esurfactants_number_cyl
+        g_cyl = self.base_micelle.surfactants_number_cyl
         dg_cyl_drs = self.deriv_surfactants_number_cyl_wrt_r_sph
         g_cap = self.base_micelle.surfactants_number_cap
         dg_cap_drs = self.deriv_surfactants_number_cap_wrt_r_sph
@@ -214,7 +212,7 @@ class RodlikeMicelleDerivative(object):
         da_cyl_drc = self.deriv_area_per_surfactant_cyl_wrt_r_cyl
         a_cap = self.base_micelle.area_per_surfactant_cap
         da_cap_drc = self.deriv_area_per_surfactant_cap_wrt_r_cyl
-        g_cyl = self.base_micelle.esurfactants_number_cyl
+        g_cyl = self.base_micelle.surfactants_number_cyl
         dg_cyl_drc = self.deriv_surfactants_number_cyl_wrt_r_cyl
         g_cap = self.base_micelle.surfactants_number_cap
         dg_cap_drc = self.deriv_surfactants_number_cap_wrt_r_cyl
@@ -376,13 +374,13 @@ class RodlikeMicelleDerivative(object):
 
         return deform
 
-    def deriv_interface_wrt_sph(self):
+    def deriv_interface_free_energy_wrt_r_sph(self):
         sigma = self.base_micelle._sigma_agg()
         d_area_drs = self.deriv_area_per_surfactant_wrt_r_sph
 
         return sigma * d_area_drs
 
-    def deriv_interface_wrt_cyl(self):
+    def deriv_interface_free_energy_wrt_r_cyl(self):
         sigma = self.base_micelle._sigma_agg()
         d_area_drc = self.deriv_area_per_surfactant_wrt_r_cyl
 
@@ -392,14 +390,13 @@ class RodlikeMicelleDerivative(object):
         # rsph
         sph_steric = self.deriv_steric_vdw_wrt_r_sph()
         sph_deform = self.deriv_deformation_nagarajan_wrt_r_sph()
-        sph_interface = self.deriv_interface_wrt_r_sph()
-
+        sph_interface = self.deriv_interface_free_energy_wrt_r_sph()
         rsph = sph_steric + sph_interface + sph_deform
 
         # rcyl
         cyl_steric = self.deriv_steric_vdw_wrt_r_sph()
         cyl_deform = self.deriv_deformation_nagarajan_wrt_r_sph()
-        cyl_interface = self.deriv_interface_wrt_r_sph()
+        cyl_interface = self.deriv_interface_free_energy_wrt_r_sph()
 
         rcyl = cyl_steric + cyl_interface + cyl_deform
 
