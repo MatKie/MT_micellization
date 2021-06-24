@@ -52,7 +52,7 @@ class RodlikeMicelleDerivative(object):
 
         prefac = 2.0 * np.pi / (3.0 * volume)
         term_1 = 12.0 * rs * rs
-        term_2 = -2.0 * H * dH_drs * (3.0 * rs * rs * rs - H)
+        term_2 = -2.0 * H * dH_drs * (3.0 * rs - H)
         term_3 = -1.0 * H * H * (3.0 - dH_drs)
 
         return prefac * (term_1 + term_2 + term_3)
@@ -69,8 +69,8 @@ class RodlikeMicelleDerivative(object):
 
         prefac = 2.0 * np.pi / (3.0 * volume)
         term_1 = 0.0
-        term_2 = -2.0 * H * dH_drc * (3.0 * rs * rs * rs - H)
-        term_3 = -1.0 * H * H*(-1.0 * dH_drc)
+        term_2 = -2.0 * H * dH_drc * (3.0 * rs - H)
+        term_3 = -1.0 * H * H * (-1.0 * dH_drc)
 
         return prefac * (term_1 + term_2 + term_3)
 
@@ -98,7 +98,7 @@ class RodlikeMicelleDerivative(object):
         dgcyl_drs = self.deriv_surfactants_number_cyl_wrt_r_sph
         prefac = volume / np.pi
 
-        term_1 = rc * rc * dgcyl_drs
+        term_1 = dgcyl_drs / (rc * rc)
 
         return prefac * term_1
 
@@ -113,8 +113,8 @@ class RodlikeMicelleDerivative(object):
         gcyl = self.base_micelle.surfactants_number_cyl
         prefac = volume / np.pi
 
-        term_1 = rc * rc * dgcyl_drc
-        term_2 = gcyl * 2.0 * rc
+        term_1 = dgcyl_drc / (rc * rc)
+        term_2 = -2.0 * gcyl / (rc * rc * rc)
 
         return prefac * (term_1 + term_2)
 
@@ -129,11 +129,11 @@ class RodlikeMicelleDerivative(object):
         dlc_drc = self.deriv_cylinder_length_wrt_r_cyl
         dgcyl_drc = self.deriv_surfactants_number_cyl_wrt_r_cyl
 
-        term_1 = lc * gcyl
-        term_2 = rc * dlc_drc * gcyl
-        term_3 = rc * lc * dgcyl_drc
+        term_1 = lc / gcyl
+        term_2 = rc * dlc_drc / gcyl
+        term_3 = rc * lc * dgcyl_drc / (gcyl * gcyl)
 
-        return np.pi * (term_1 + term_2 + term_3)
+        return 2.0 * np.pi * (term_1 + term_2 - term_3)
 
     @property
     def deriv_area_per_surfactant_cyl_wrt_r_sph(self):
@@ -146,10 +146,10 @@ class RodlikeMicelleDerivative(object):
         dlc_drs = self.deriv_cylinder_length_wrt_r_sph
         dgcyl_drs = self.deriv_surfactants_number_cyl_wrt_r_sph
 
-        term_2 = rc * dlc_drs * gcyl
-        term_3 = rc * lc * dgcyl_drs
+        term_2 = dlc_drs / gcyl
+        term_3 = lc * dgcyl_drs / (gcyl * gcyl)
 
-        return np.pi * (term_2 + term_3)
+        return np.pi * rc * (term_2 - term_3)
 
     @property
     def deriv_area_per_surfactant_cap_wrt_r_sph(self):
@@ -163,11 +163,11 @@ class RodlikeMicelleDerivative(object):
         dgcap_drs = self.deriv_surfactants_number_cap_wrt_r_sph
 
         aux = 2.0 * rs - H
-        term_1 = gcap * aux
-        term_2 = rs * dgcap_drs * aux
-        term_3 = rs * gcap * (2.0 - dH_drs)
+        term_1 = aux / gcap
+        term_2 = rs * (2.0 - dH_drs) / gcap
+        term_3 = dgcap_drs * rs * aux / (gcap * gcap)
 
-        return 4.0 * np.pi * (term_1 + term_2 + term_3)
+        return 4.0 * np.pi * (term_1 + term_2 - term_3)
 
     @property
     def deriv_area_per_surfactant_cap_wrt_r_cyl(self):
@@ -181,10 +181,10 @@ class RodlikeMicelleDerivative(object):
         dgcap_drc = self.deriv_surfactants_number_cap_wrt_r_cyl
 
         aux = 2.0 * rs - H
-        term_2 = rs * dgcap_drc * aux
-        term_3 = -1.0 * rs * gcap * dH_drc
+        term_1 = dH_drc * rs / gcap
+        term_2 = rs * aux * dgcap_drc / (gcap * gcap)
 
-        return 4.0 * np.pi * (term_2 + term_3)
+        return -4.0 * np.pi * (term_1 + term_2)
 
     @property
     def deriv_area_per_surfactant_wrt_r_sph(self):
@@ -230,8 +230,8 @@ class RodlikeMicelleDerivative(object):
         surfactants_number = self.base_micelle.surfactants_number
         g_cap = self.base_micelle.surfactants_number_cap
         g_cyl = surfactants_number - g_cap
-        dg_cyl_drs = self.deriv_surfactants_number_cyl_wrt_r_sph()
-        dg_cap_drs = self.deriv_surfactants_number_cap_wrt_r_sph()
+        dg_cyl_drs = self.deriv_surfactants_number_cyl_wrt_r_sph
+        dg_cap_drs = self.deriv_surfactants_number_cap_wrt_r_sph
         deformation_cyl = self.base_micelle._deformation_nagarajan_cyl()
         deformation_sph = self.base_micelle._deformation_nagarajan_sph()
         d_deformation_cyl = 0.0
@@ -246,8 +246,8 @@ class RodlikeMicelleDerivative(object):
         surfactants_number = self.base_micelle.surfactants_number
         g_cap = self.base_micelle.surfactants_number_cap
         g_cyl = surfactants_number - g_cap
-        dg_cyl_drc = self.deriv_surfactants_number_cyl_wrt_r_cyl()
-        dg_cap_drc = self.deriv_surfactants_number_cap_wrt_r_cyl()
+        dg_cyl_drc = self.deriv_surfactants_number_cyl_wrt_r_cyl
+        dg_cap_drc = self.deriv_surfactants_number_cap_wrt_r_cyl
         deformation_cyl = self.base_micelle._deformation_nagarajan_cyl()
         deformation_sph = self.base_micelle._deformation_nagarajan_sph()
         d_deformation_cyl = self.deriv_deformation_nagarajan_cyl_wrt_r_cyl()
@@ -261,7 +261,7 @@ class RodlikeMicelleDerivative(object):
     def deriv_deformation_nagarajan_cap_wrt_r_sph(self):
         volume = self.base_micelle.volume
         segment_length = self.base_micelle.segment_length
-        length = self.base_micelle.lengths
+        length = self.base_micelle.length
         rs = self.base_micelle.radius_sphere
         area = self.base_micelle.area_per_surfactant_cap
         da_drs = self.deriv_area_per_surfactant_cap_wrt_r_sph
@@ -301,74 +301,82 @@ class RodlikeMicelleDerivative(object):
     def deriv_steric_vdw_cap_wrt_r_sph(self):
         headgroup_area = self.base_micelle.headgroup_area
         area_cap = self.base_micelle.area_per_surfactant_cap
-        d_area_drs = self.deriv_area_per_surfactant_cap_wrt_r_sph()
+        d_area_drs = self.deriv_area_per_surfactant_cap_wrt_r_sph
+        g_cap = self.base_micelle.surfactants_number_cap
+        d_g_cap_drs = self.deriv_surfactants_number_cap_wrt_r_sph
+        g_overall = self.base_micelle.surfactants_number
 
         factor = headgroup_area / (headgroup_area - area_cap)
-        deriv = factor * d_area_drs
+        deriv = factor * d_area_drs / area_cap
 
-        return deriv
+        full_deriv = (
+            -d_g_cap_drs * np.log(1.0 - headgroup_area / area_cap) + g_cap * deriv
+        ) / g_overall
+
+        return full_deriv
 
     def deriv_steric_vdw_cap_wrt_r_cyl(self):
         headgroup_area = self.base_micelle.headgroup_area
         area_cap = self.base_micelle.area_per_surfactant_cap
-        d_area_drc = self.deriv_area_per_surfactant_cap_wrt_r_cyl()
+        d_area_drc = self.deriv_area_per_surfactant_cap_wrt_r_cyl
+        g_cap = self.base_micelle.surfactants_number_cap
+        d_g_cap_drc = self.deriv_surfactants_number_cap_wrt_r_cyl
+        g_overall = self.base_micelle.surfactants_number
 
         factor = headgroup_area / (headgroup_area - area_cap)
-        deriv = factor * d_area_drc
+        deriv = factor * d_area_drc / area_cap
 
-        return deriv
+        full_deriv = (
+            -d_g_cap_drc * np.log(1.0 - headgroup_area / area_cap) + g_cap * deriv
+        ) / g_overall
+
+        return full_deriv
 
     def deriv_steric_vdw_cyl_wrt_r_sph(self):
         headgroup_area = self.base_micelle.headgroup_area
-        area_cyl = self.base_micelle.area_per_surfactant_cyl
-        d_area_drs = self.deriv_area_per_surfactant_cyl_wrt_r_sph()
+        area_i = self.base_micelle.area_per_surfactant_cyl
+        d_area_dri = self.deriv_area_per_surfactant_cyl_wrt_r_sph
+        g_i = self.base_micelle.surfactants_number_cyl
+        d_g_i_dri = self.deriv_surfactants_number_cyl_wrt_r_sph
+        g_overall = self.base_micelle.surfactants_number
 
-        factor = headgroup_area / (headgroup_area - area_cyl)
-        deriv = factor * d_area_drs
+        factor = headgroup_area / (headgroup_area - area_i)
+        deriv = factor * d_area_dri / area_i
 
-        return deriv
+        full_deriv = (
+            -d_g_i_dri * np.log(1.0 - headgroup_area / area_i) + g_i * deriv
+        ) / g_overall
+
+        return full_deriv
 
     def deriv_steric_vdw_cyl_wrt_r_cyl(self):
         headgroup_area = self.base_micelle.headgroup_area
-        area_cyl = self.base_micelle.area_per_surfactant_cyl
-        d_area_drc = self.deriv_area_per_surfactant_cyl_wrt_r_cyl()
+        area_i = self.base_micelle.area_per_surfactant_cyl
+        d_area_dri = self.deriv_area_per_surfactant_cyl_wrt_r_cyl
+        g_i = self.base_micelle.surfactants_number_cyl
+        d_g_i_dri = self.deriv_surfactants_number_cyl_wrt_r_cyl
+        g_overall = self.base_micelle.surfactants_number
 
-        factor = headgroup_area / (headgroup_area - area_cyl)
-        deriv = factor * d_area_drc
+        factor = headgroup_area / (headgroup_area - area_i)
+        deriv = factor * d_area_dri / area_i
 
-        return deriv
+        full_deriv = (
+            -d_g_i_dri * np.log(1.0 - headgroup_area / area_i) + g_i * deriv
+        ) / g_overall
+
+        return full_deriv
 
     def deriv_steric_vdw_wrt_r_sph(self):
-        g_cap = self.base_micelle.surfactants_number_cap
-        g_cyl = self.base_micelle.surfactants_number_cyl
-        d_g_cyl_drs = self.deriv_surfactants_number_cyl_wrt_r_sph()
-        d_g_cap_drs = self.deriv_surfactants_number_cap_wrt_r_sph()
-
-        steric_cap = self.base_micelle._steric_cap()
-        d_steric_cap = self.deriv_steric_vdw_cap_wrt_r_sph()
-        steric_cyl = self.base_micelle._steric_cyl()
-        d_steric_cyl = self.deriv_steric_vdw_cyl_wrt_r_sph()
-
-        cap = steric_cap * d_g_cap_drs + d_steric_cap * g_cap
-        cyl = steric_cyl * d_g_cyl_drs + d_steric_cyl * g_cyl
+        cap = self.deriv_steric_vdw_cap_wrt_r_sph()
+        cyl = self.deriv_steric_vdw_cyl_wrt_r_sph()
 
         deform = cap + cyl
 
         return deform
 
     def deriv_steric_vdw_wrt_r_cyl(self):
-        g_cap = self.base_micelle.surfactants_number_cap
-        g_cyl = self.base_micelle.surfactants_number_cyl
-        d_g_cyl_drc = self.deriv_surfactants_number_cyl_wrt_r_cyl()
-        d_g_cap_drc = self.deriv_surfactants_number_cap_wrt_r_cyl()
-
-        steric_cap = self.base_micelle._steric_cap()
-        d_steric_cap = self.deriv_steric_vdw_cap_wrt_r_cyl()
-        steric_cyl = self.base_micelle._steric_cyl()
-        d_steric_cyl = self.deriv_steric_vdw_cyl_wrt_r_cyl()
-
-        cap = steric_cap * d_g_cap_drc + d_steric_cap * g_cap
-        cyl = steric_cyl * d_g_cyl_drc + d_steric_cyl * g_cyl
+        cap = self.deriv_steric_vdw_cap_wrt_r_cyl()
+        cyl = self.deriv_steric_vdw_cyl_wrt_r_cyl()
 
         deform = cap + cyl
 
@@ -394,9 +402,9 @@ class RodlikeMicelleDerivative(object):
         rsph = sph_steric + sph_interface + sph_deform
 
         # rcyl
-        cyl_steric = self.deriv_steric_vdw_wrt_r_sph()
-        cyl_deform = self.deriv_deformation_nagarajan_wrt_r_sph()
-        cyl_interface = self.deriv_interface_free_energy_wrt_r_sph()
+        cyl_steric = self.deriv_steric_vdw_wrt_r_cyl()
+        cyl_deform = self.deriv_deformation_nagarajan_wrt_r_cyl()
+        cyl_interface = self.deriv_interface_free_energy_wrt_r_cyl()
 
         rcyl = cyl_steric + cyl_interface + cyl_deform
 
