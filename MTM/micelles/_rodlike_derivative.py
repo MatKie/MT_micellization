@@ -5,9 +5,12 @@ class RodlikeMicelleDerivative(object):
     def __init__(self, base_micelle, r_sph=None, r_cyl=None):
         self.base_micelle = base_micelle
         if r_sph is not None:
-            self._r_sph = r_sph
+            self.base_micelle._r_sph = r_sph
         if r_cyl is not None:
-            self._r_cyl = r_cyl
+            self.base_micelle._r_cyl = r_cyl
+
+        self.derivative_wrt_r_cyl = None
+        self.derivative_wrt_r_sph = None
 
     @property
     def deriv_cap_height_wrt_r_sph(self):
@@ -398,18 +401,43 @@ class RodlikeMicelleDerivative(object):
 
     def jacobian(self, x=None):
         if x is not None:
-            self._r_sph, self._r_cyl = x[0], x[1]
+            self.base_micelle._r_sph, self.base_micelle._r_cyl = x[0], x[1]
+        else:
+            x = np.zeros((2,))
+            x[0], x[1] = (
+                self.base_micelle.radius_sphere,
+                self.base_micelle.radius_cylinder,
+            )
+        # Boundaries
+        if x[0] < 0 or x[1] < 0 or x[0] > 10 or x[1] > 10:
+            # Return a higher value to give a negative gradient.
+            sign_r_sph = np.sign(self.derivative_wrt_r_sph)
+            sign_r_cyl = np.sign(self.derivative_wrt_r_cyl)
+            return np.asarray(
+                [
+                    self.derivative_wrt_r_sph + sign_r_sph,
+                    self.derivative_wrt_r_cyl + sign_r_cyl,
+                ]
+            )
+        if x[0] < x[1]:
+            # Return a higher value with respect to cylinder so that we
+            # get
+            sign_r_cyl = np.sign(self.derivative_wrt_r_cyl)
+            return np.asarray(
+                [self.derivative_wrt_r_sph, self.derivative_wrt_r_cyl + sign_r_cyl]
+            )
+
         # rsph
         sph_steric = self.deriv_steric_vdw_wrt_r_sph()
         sph_deform = self.deriv_deformation_nagarajan_wrt_r_sph()
         sph_interface = self.deriv_interface_free_energy_wrt_r_sph()
-        rsph = sph_steric + sph_interface + sph_deform
+        self.derivative_wrt_r_sph = sph_steric + sph_interface + sph_deform
 
         # rcyl
         cyl_steric = self.deriv_steric_vdw_wrt_r_cyl()
         cyl_deform = self.deriv_deformation_nagarajan_wrt_r_cyl()
         cyl_interface = self.deriv_interface_free_energy_wrt_r_cyl()
 
-        rcyl = cyl_steric + cyl_interface + cyl_deform
+        self.derivative_wrt_r_cyl = cyl_steric + cyl_interface + cyl_deform
 
-        return np.asarray([rsph, rcyl])
+        return np.asarray([self.derivative_wrt_r_sph, self.derivative_wrt_r_cyl])
