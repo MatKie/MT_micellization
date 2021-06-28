@@ -1,7 +1,7 @@
 from .base_micelle import BaseMicelle
 import numpy as np
 import warnings
-from scipy.optimize import minimize, LinearConstraint
+from scipy.optimize import minimize, LinearConstraint, root
 from ._rodlike_derivative import RodlikeMicelleDerivative
 
 
@@ -9,38 +9,82 @@ class RodlikeMicelle(BaseMicelle):
     """
     Class for the calculation of chemical potential incentive of
     rodlike micelles.
+
+    High level functionality implemented in BaseMicelle class -- see
+    main methods there. 
     """
 
-    def __init__(self, *args, throw_errors=True):
+    def __init__(self, *args, throw_errors=False):
         super().__init__(*args)
-        self._r_sph = 1.5
+        self._r_sph = 1.3
         self._r_cyl = 1.0
         self.throw_errors = throw_errors
 
     @classmethod
     def optimised_radii(cls, *args, **kwargs):
+        """
+        Return an instance with the radii already optmised via 
+        self.optimise_radii()
+
+        Returns
+        -------
+        object
+            instance of RodlikeMicelle class.
+        """
         instance = cls(*args, **kwargs)
         instance.optimise_radii()
         return instance
 
-    def optimise_radii(self, x_0=[1.3, 1.0]):
+    def optimise_radii(self, method="derivative", hot_start=True, x_0=[1.3, 1.0]):
+        """
+        Optimise the radii of the rodlike micelle parts for minimal 
+        chemical potential difference.
 
-        constraints = {
-            "type": "ineq",
-            "fun": lambda x: np.array([x[0] - x[1] - 1e8]),
-            "jac": lambda x: np.array([1.0, -1.0]),
-        }
+        Parameters
+        ----------
+        method : str, optional
+            'derivative' for finding the radii via a root search of 
+            the jacobian and 'objective' for finding the radii via 
+            an optimisation of the objective function, by default "derivative"
+        hot_start : bool, optional
+            Use current values of radius of spherical endcaps and radius
+            of cylinder for starting values, by default True
+        x_0 : list, optional
+            starting values for radius of spherical endcaps and radius 
+            of cylinder, by default [1.3, 1.0]
+
+        Raises
+        ------
+        RuntimeError
+            if optimisation is not totally successful 
+            (if self.throw_error=False it's a warning)
+        """
         Derivatives = RodlikeMicelleDerivative(self)
+        if hot_start:
+            x_0 = [self.radius_sphere, self.radius_cylinder]
 
-        upper_bound = self.length
-        Optim = minimize(
-            self._optimiser_func,
-            np.asarray(x_0),
-            jac=Derivatives.jacobian,
-            bounds=((0, upper_bound), (0, upper_bound)),
-            constraints=constraints,
-            options={"ftol": 1e-8},
-        )
+        if method == "derivative":
+            Optim = root(
+                Derivatives.jacobian, x0=x_0, method="hybr", options={"factor": 0.1}
+            )
+        elif method == "objective":
+            constraints = {
+                "type": "ineq",
+                "fun": lambda x: np.array([x[0] - x[1] - 1e8]),
+                "jac": lambda x: np.array([1.0, -1.0]),
+            }
+
+            upper_bound = 5
+            Optim = minimize(
+                self._optimiser_func,
+                np.asarray(x_0),
+                jac=Derivatives.jacobian,
+                bounds=((0, upper_bound), (0, upper_bound)),
+                constraints=constraints,
+                options={"ftol": 1e-8},
+            )
+        else:
+            raise RuntimeError("Method need either be derivative or objective")
 
         if not Optim.success:  # and Optim.status != 8:
             errmsg = "Error in Optimisation of micelle dimension: {:s}".format(

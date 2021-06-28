@@ -450,7 +450,7 @@ class TestRodlikeMicelleFullFreeEnergy:
         calc_values = np.zeros(pub_values.shape)
         for i, g in enumerate(pub_values[:, 0]):
             mic.surfactants_number = g
-            mic.optimise_radii([1.3, 1.0])
+            mic.optimise_radii(x_0=[1.3, 1.0])
             calc_values[i, 0] = g
             calc_values[i, 1] = mic.get_delta_chempot()
 
@@ -482,7 +482,7 @@ class TestRodlikeMicelleFullFreeEnergy:
         def run_and_assert(x_0):
             for i, g in enumerate(gs):
                 mic.surfactants_number = g
-                mic.optimise_radii(x_0)
+                mic.optimise_radii(x_0=x_0, hot_start=False)
                 calc_values[i] = mic.get_delta_chempot()
 
             for i, i_plus_1 in zip(calc_values, calc_values[1:]):

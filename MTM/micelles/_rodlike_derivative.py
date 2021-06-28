@@ -400,6 +400,29 @@ class RodlikeMicelleDerivative(object):
         return sigma * d_area_drc
 
     def jacobian(self, x=None):
+        """
+        Return the derivative of the chemical potential difference of 
+        a rodlike micelle with respect to the radius of the spherical
+        endcaps and the radius of the cylinder part.
+
+        If the values are negative in either direction return a value
+        giving an opposite search direction. I.e. returning a more negative
+        or more positive value. 
+        If the cylinder radius is bigger than the sphere radius, return
+        a more negative/positive value for the cylinder derivative. 
+        
+        Parameters
+        ----------
+        x : array like of length 2, optional
+            Values at which to evaluate the derivatives. 
+            If None, take the current values of the micelle radii, by default None
+
+        Returns
+        -------
+        numpy array, shape (2,)
+            Derivatives wrt radius of sphere and radius of cylinder
+            respectively.
+        """
         if x is not None:
             self.base_micelle._r_sph, self.base_micelle._r_cyl = x[0], x[1]
         else:
@@ -421,7 +444,7 @@ class RodlikeMicelleDerivative(object):
             )
         if x[0] < x[1]:
             # Return a higher value with respect to cylinder so that we
-            # get
+            # get away from those solutions
             sign_r_cyl = np.sign(self.derivative_wrt_r_cyl)
             return np.asarray(
                 [self.derivative_wrt_r_sph, self.derivative_wrt_r_cyl + sign_r_cyl]
