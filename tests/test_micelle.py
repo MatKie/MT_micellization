@@ -1,3 +1,6 @@
+from MTM.micelles.rodlike_micelle import RodlikeMicelle
+from MTM.micelles._rodlike_derivative import RodlikeMicelleDerivative
+from numpy.core.numeric import roll
 import pytest
 import sys
 import numpy as np
@@ -8,6 +11,17 @@ import MTM.micelles as micelle
 
 sys.path.append("../")
 this_path = os.path.dirname(__file__)
+
+
+def calc_mean_of_deviation(calc, pub):
+    n = len(calc)
+    if n != len(pub):
+        raise RuntimeError("Vectors to be compared of different lenght!")
+
+    diff = calc / pub - np.ones(pub.shape)
+    mean = np.mean(diff)
+
+    return np.abs(mean)
 
 
 class TestBaseMicelle:
@@ -130,7 +144,7 @@ class TestSphericalMicelleInterfaceFreeEnergy:
     def test_regress_tension_dodecane(self):
         """
         Compare values to extracted values from Reinhardt et al.
-        interfacial tension of n-dodecane - water at room temp. 
+        interfacial tension of n-dodecane - water at room temp.
         """
         lit = literature.LiteratureData()
         pub_values = lit.tension_dodecane_MT
@@ -157,8 +171,8 @@ class TestSphericalMicelleInterfaceFreeEnergy:
     def test_regress_interface_free_energy_298(self):
         """
         Compare values to extracted values from Reinhardt et al.
-        Interfacial free energy of an octyl tail at room temp over 
-        various agg. sizes. 
+        Interfacial free energy of an octyl tail at room temp over
+        various agg. sizes.
         """
         lit = literature.LiteratureData()
         pub_values = lit.interface_sph_298_MT
@@ -184,8 +198,8 @@ class TestSphericalMicelleInterfaceFreeEnergy:
     def test_regress_interface_free_energy_330(self):
         """
         Compare values to extracted values from Reinhardt et al.
-        Interfacial free energy of an octyl tail at 330 K over 
-        various agg. sizes. 
+        Interfacial free energy of an octyl tail at 330 K over
+        various agg. sizes.
         """
         lit = literature.LiteratureData()
         pub_values = lit.interface_sph_330_MT
@@ -348,6 +362,10 @@ class TestSphericalMicelleDeltaMu:
         for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
             assert calc == pytest.approx(pub, abs=0.1)
 
+        mean = calc_mean_of_deviation(calc_values[:, 1], pub_values[:, 1])
+
+        assert mean < 0.005
+
 
 class TestRodlikeMicelle:
     def test_cap_height(self):
@@ -409,7 +427,7 @@ class TestRodlikeMicelleNagarajanDeformationFreeEnergy:
 
 class TestRodlikeMicelleOptimiseRadii:
     def test_optimise_micelle(self):
-        mic = micelle.RodlikeMicelle(125, 298.15, 10)
+        mic = micelle.RodlikeMicelle(125, 298.15, 10, throw_errors=False)
         rc, rs = mic.radius_cylinder, mic.radius_sphere
         mic.optimise_radii()
         assert mic.radius_cylinder < mic.radius_sphere
@@ -426,33 +444,83 @@ class TestRodlikeMicelleFullFreeEnergy:
         """
         lit = literature.LiteratureData()
         pub_values = lit.delta_mu_rodlike_full
-        mic = micelle.RodlikeMicelle.optimised_radii(125, 298, 10)
+        mic = micelle.RodlikeMicelle.optimised_radii(125, 298, 10, throw_errors=False)
         fig, ax = create_fig(1, 1)
         ax = ax[0]
         calc_values = np.zeros(pub_values.shape)
         for i, g in enumerate(pub_values[:, 0]):
-            mic.g = g
-            mic.optimise_radii()
+            mic.surfactants_number = g
+            mic.optimise_radii(x_0=[1.3, 1.0])
             calc_values[i, 0] = g
             calc_values[i, 1] = mic.get_delta_chempot()
 
         ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
         ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
 
+        ax.set_ylim(min(pub_values[:, 1]) - 1, max(pub_values[:, 1]) + 2)
         ax.legend()
 
         save_to_file(os.path.join(this_path, "regress_delta_mu_rod"))
 
         for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
-            assert calc == pytest.approx(pub, abs=0.2)
+            assert calc == pytest.approx(pub, abs=0.05)
+
+        mean = calc_mean_of_deviation(calc_values[:, 1], pub_values[:, 1])
+
+        assert mean < 0.005
+
+    def test_unsteadiness(self):
+        """
+        There is/was an unsteadiness in the chemical potential difference
+        over aggregation number. This test benchmarks if we can get rid
+        of that.
+        """
+        mic = micelle.RodlikeMicelle.optimised_radii(80, 298, 10, throw_errors=False)
+        gs = np.linspace(80, 180, 101)
+        calc_values = np.zeros(gs.shape)
+
+        def run_and_assert(x_0):
+            for i, g in enumerate(gs):
+                mic.surfactants_number = g
+                mic.optimise_radii(x_0=x_0, hot_start=False)
+                calc_values[i] = mic.get_delta_chempot()
+
+            for i, i_plus_1 in zip(calc_values, calc_values[1:]):
+                try:
+                    assert i_plus_1 - i < 1e-8
+                except AssertionError:
+                    lit = literature.LiteratureData()
+                    pub_values = lit.delta_mu_rodlike_full
+                    fig, ax = create_fig(1, 1)
+                    ax = ax[0]
+                    ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
+                    ax.plot(gs, calc_values, label="calc")
+
+                    ax.set_ylim(min(pub_values[:, 1]) - 1, max(pub_values[:, 1]) + 2)
+                    ax.legend()
+
+                    save_to_file(
+                        os.path.join(
+                            this_path,
+                            "regress_delta_mu_rod_{:.1f}_{:.1f}".format(*x_0),
+                        )
+                    )
+                    raise AssertionError(
+                        f"Unsteadiness with starting values \
+                        {x_0}: {i_plus_1} - {i}"
+                    )
+
+        run_and_assert([1.3, 1.0])
+        run_and_assert([1.2, 1.0])
+        run_and_assert([1.0, 0.8])
 
 
 class TestGlobularMicelleFullFreeEnergy:
     """
-        Compare values to extracted values from Enders.
-        delta_mu for rodlike micelles at 298.15 K.
-        Aggregation sizes for all given in lit.
-        """
+    Compare values to extracted values from Enders.
+    delta_mu for rodlike micelles at 298.15 K.
+    Aggregation sizes for all given in lit.
+    """
 
     def test_regress_globular(self):
         lit = literature.LiteratureData()
@@ -462,7 +530,7 @@ class TestGlobularMicelleFullFreeEnergy:
         ax = ax[0]
         calc_values = np.zeros(pub_values.shape)
         for i, g in enumerate(pub_values[:, 0]):
-            mic.g = g
+            mic._g = g
             calc_values[i, 0] = g
             calc_values[i, 1] = mic.get_delta_chempot()
 
@@ -476,3 +544,116 @@ class TestGlobularMicelleFullFreeEnergy:
         for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
             assert calc == pytest.approx(pub, abs=0.2)
 
+
+class TestBilayerVesicle:
+    def test_bilayer_vesicle_sanity(self):
+        """
+        Check if the values are somewhat in the right direction after
+        optimising the radii.
+        """
+        mic = micelle.BilayerVesicle(100, 298.15, 10)
+        mic.optimise_radii()
+        mu = mic.get_delta_chempot()
+
+        assert mu > -15.0
+        assert mu < -5
+
+    def test_regress_bilayer_vesicle(self):
+        """
+        Compare values to extracted values from Enders.
+        delta_mu for bilayer vesicles micelles at 298 K.
+        Aggregation sizes for all given in lit.
+        """
+        lit = literature.LiteratureData()
+        pub_values = lit.delta_mu_bilayer_vesicle
+        mic = micelle.BilayerVesicle.optimised_radii(125, 298, 10, throw_errors=False)
+        fig, ax = create_fig(1, 1)
+        ax = ax[0]
+        calc_values = np.zeros(pub_values.shape)
+        for i, g in enumerate(pub_values[:, 0]):
+            mic._g = g
+            mic.optimise_radii()
+            calc_values[i, 0] = g
+            calc_values[i, 1] = mic.get_delta_chempot()
+
+        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+
+        ax.legend()
+
+        save_to_file(os.path.join(this_path, "regress_delta_mu_bil_ves"))
+
+        for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
+            assert calc == pytest.approx(pub, abs=0.1)
+
+        mean = calc_mean_of_deviation(calc_values[:, 1], pub_values[:, 1])
+
+        assert mean < 0.005
+
+
+class TestBilayerVesicleInterface:
+    def test_regress_bilayer_vesicle_298(self):
+        """
+        Compare values to extracted values from Reinhardt et al.
+        interface free energy for bilayer vesicles micelles at 298 K.
+        Aggregation sizes for all given in lit.
+        """
+        lit = literature.LiteratureData()
+        pub_values = lit.interface_bilayer_vesicle_C8
+        mic = micelle.BilayerVesicle.optimised_radii(125, 298.15, 8, throw_errors=True)
+        fig, ax = create_fig(1, 1)
+        ax = ax[0]
+        calc_values = np.zeros(pub_values.shape)
+        for i, g in enumerate(pub_values[:, 0]):
+            mic._g = g
+            mic.optimise_radii()
+            calc_values[i, 0] = g
+            calc_values[i, 1] = mic.get_interface_free_energy()
+
+        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+
+        ax.legend()
+
+        save_to_file(
+            os.path.join(this_path, "regress_interface_free_energy_bil_ves_C8_330")
+        )
+
+        for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
+            assert calc == pytest.approx(pub, abs=0.1)
+
+        mean = calc_mean_of_deviation(calc_values[:, 1], pub_values[:, 1])
+
+        assert mean < 0.005
+
+    def test_regress_bilayer_vesicle_330(self):
+        """
+        Compare values to extracted values from Reinhardt et al.
+        interface free energy for bilayer vesicles micelles at 330 K.
+        Aggregation sizes for all given in lit.
+        """
+        lit = literature.LiteratureData()
+        pub_values = lit.interface_bilayer_vesicle_C8_330
+        mic = micelle.BilayerVesicle.optimised_radii(125, 330, 8, throw_errors=True)
+        fig, ax = create_fig(1, 1)
+        ax = ax[0]
+        calc_values = np.zeros(pub_values.shape)
+        for i, g in enumerate(pub_values[:, 0]):
+            mic._g = g
+            mic.optimise_radii()
+            calc_values[i, 0] = g
+            calc_values[i, 1] = mic.get_interface_free_energy()
+
+        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+
+        ax.legend()
+
+        save_to_file(os.path.join(this_path, "regress_interface_free_energy_bil_ves"))
+
+        for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
+            assert calc == pytest.approx(pub, abs=0.1)
+
+        mean = calc_mean_of_deviation(calc_values[:, 1], pub_values[:, 1])
+
+        assert mean < 0.005
