@@ -6,8 +6,8 @@ from scipy.optimize import minimize
 
 class BilayerVesicle(BaseMicelle):
     """
-    Class for the calculation of chemical potential incentive of 
-    bilayer vesicle micelles. Follows Enders and Haentzschel 1998.  
+    Class for the calculation of chemical potential incentive of
+    bilayer vesicle micelles. Follows Enders and Haentzschel 1998.
     """
 
     def __init__(self, *args, throw_errors=True):
@@ -18,8 +18,7 @@ class BilayerVesicle(BaseMicelle):
             wheter to throw an error or warning if optimisation of radii is not convergent, by default True
         """
         super().__init__(*args)
-        self._r_out = 2.2
-        self._t_out = 0.3
+        self._r_out, self._t_out = self._starting_values()
         self.throw_errors = throw_errors
 
     @classmethod
@@ -37,25 +36,44 @@ class BilayerVesicle(BaseMicelle):
         instance.optimise_radii()
         return instance
 
-    def optimise_radii(self):
+    def optimise_radii(self, method="objective", hot_start=False):
         """
         Optimise outer radius and outer thickness of the vesicle to give
         lowest chemical potential.
 
+        Parameters
+        ----------
+        method : str, optional
+            'objective' for finding the radii via 
+            an optimisation of the objective function, by default "objective"
+        hot_start : bool, optional
+            Use current values of outer radius and outer thickness.
+            If false estimate from assumption of equal number of surfactans
+            in outer/inner layer, by default False.
+
         Raises
         ------
-        RuntimeError / or warning
-            If optimisation is not successful             
+        RuntimeError
+            if optimisation is not totally successful 
+            (if self.throw_error=False it's a warning)
+        NotImplementedError
+            if a method was chosen which is not implemented
         """
-        starting_values = np.asarray(self._starting_values())
+        if not hot_start:
+            starting_values = np.asarray(self._starting_values())
+        else:
+            starting_values = np.asarray([self.radius_outer, self.thickness_outer])
 
-        Optim = minimize(
-            self._optimiser_func, starting_values, bounds=((0, 10), (0, 10))
-        )
+        if method == "objective":
+            Optim = minimize(
+                self._optimiser_func, starting_values, bounds=((0, 10), (0, 10))
+            )
+        else:
+            raise NotImplementedError("Method '{:s}' is not implemented".format(method))
 
         if not Optim.success:  # and Optim.status != 8:
             errmsg = "Error in Optimisation of micelle dimension: {:s}".format(
-                Optim.message
+                str(Optim.message)
             )
             if self.throw_errors:
                 raise RuntimeError(errmsg)
@@ -73,14 +91,17 @@ class BilayerVesicle(BaseMicelle):
         self._r_out = variables[0]
         self._t_out = variables[1]
         obj_function = self.get_delta_chempot()
+        if not self._check_geometry():
+            obj_function = 10
         return obj_function
 
     def _starting_values(self):
         """
-        Starting values for optimisation. 
+        Starting values for optimisation.
 
         Outer radius and thickness are set so that half of the surfactant
-        is in the outer/inner layer and the inside surface area per surfactant is 10% higher than the headgroup area.
+        is in the outer/inner layer and the inside surface area per surfactant 
+        is 10% higher than the headgroup area.
 
         Returns
         -------
@@ -97,6 +118,18 @@ class BilayerVesicle(BaseMicelle):
         t_outer = r_outer - r_middle
 
         return [r_outer, t_outer]
+
+    def _check_geometry(self):
+        if (
+            self.surfactants_number_outer < 0
+            or self.surfactants_number_inner < 0
+            or self.radius_inner < 0
+            or self.radius_outer < 0
+            or self.thickness_inner < 0
+            or self.thickness_outer < 0
+        ):
+            return False
+        return True
 
     @property
     def radius_outer(self):
@@ -122,7 +155,7 @@ class BilayerVesicle(BaseMicelle):
     def radius_inner(self):
         """
         Determined via the volume needed and the given outer radius.
-        
+
         Returns
         -------
         float
@@ -142,7 +175,7 @@ class BilayerVesicle(BaseMicelle):
     def surfactants_number_outer(self):
         """
         Given by the volume between sphere with outer radius and outer
-        radius minus outer thickness. 
+        radius minus outer thickness.
 
         Returns
         -------
@@ -262,10 +295,14 @@ class BilayerVesicle(BaseMicelle):
         float
             surfactant weighted deformation free energy.
         """
+        _surfactant_number = self.surfactants_number
+        _g_out = self.surfactants_number_outer
+        factor_out = _g_out / _surfactant_number
+        factor_in = 1.0 - factor_out
         deformation_in = self._deformation_nagarajan_in()
         deformation_out = self._deformation_nagarajan_out()
 
-        return deformation_in + deformation_out
+        return factor_in * deformation_in + factor_out * deformation_out
 
     def _deformation_nagarajan_out(self):
         """
@@ -330,14 +367,18 @@ class BilayerVesicle(BaseMicelle):
         _headgroup_area = self.headgroup_area
         _area_inner = self.area_per_surfactant_inner
         _g_in = self.surfactants_number_inner
-        _steric_in = aux(_headgroup_area, _area_inner, _g_in, _surfactants_number)
+        if _headgroup_area > _area_inner:
+            _steric_in = 10.0
+        else:
+            _steric_in = aux(_headgroup_area, _area_inner, _g_in, _surfactants_number)
 
         _g_out = self.surfactants_number_outer
         _area_outer = self.area_per_surfactant_outer
 
-        if _area_outer < _headgroup_area or _area_inner < _headgroup_area:
-            return 100
-        _steric_out = aux(_headgroup_area, _area_outer, _g_out, _surfactants_number)
+        if _area_outer < _headgroup_area:
+            _steric_out = 10.0
+        else:
+            _steric_out = aux(_headgroup_area, _area_outer, _g_out, _surfactants_number)
 
         steric = _steric_in + _steric_out
 
