@@ -558,6 +558,15 @@ class TestBilayerVesicle:
         assert mu > -15.0
         assert mu < -5
 
+    def test_negative_geometries(self):
+        """
+        Start with a value set which gives wrong optimised geometries
+        (so far).
+        """
+        g = 42.734856208490356
+        mic = micelle.BilayerVesicle.optimised_radii(g, 298, 10)
+        assert mic.radius_inner > 0
+
     def test_regress_bilayer_vesicle(self):
         """
         Compare values to extracted values from Enders.
@@ -566,15 +575,18 @@ class TestBilayerVesicle:
         """
         lit = literature.LiteratureData()
         pub_values = lit.delta_mu_bilayer_vesicle
-        mic = micelle.BilayerVesicle.optimised_radii(125, 298, 10, throw_errors=False)
+        mic = micelle.BilayerVesicle.optimised_radii(
+            pub_values[0, 0], 298, 10, throw_errors=False
+        )
         fig, ax = create_fig(1, 1)
         ax = ax[0]
         calc_values = np.zeros(pub_values.shape)
         for i, g in enumerate(pub_values[:, 0]):
             mic._g = g
-            mic.optimise_radii()
+            mic.optimise_radii(hot_start=False)
             calc_values[i, 0] = g
-            calc_values[i, 1] = mic.get_delta_chempot()
+            chempot = mic.get_delta_chempot()
+            calc_values[i, 1] = chempot
 
         ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
         ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
@@ -584,7 +596,7 @@ class TestBilayerVesicle:
         save_to_file(os.path.join(this_path, "regress_delta_mu_bil_ves"))
 
         for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
-            assert calc == pytest.approx(pub, abs=0.1)
+            assert calc == pytest.approx(pub, abs=0.05)
 
         mean = calc_mean_of_deviation(calc_values[:, 1], pub_values[:, 1])
 
@@ -616,11 +628,11 @@ class TestBilayerVesicleInterface:
         ax.legend()
 
         save_to_file(
-            os.path.join(this_path, "regress_interface_free_energy_bil_ves_C8_330")
+            os.path.join(this_path, "regress_interface_free_energy_bil_ves_C8_298")
         )
 
         for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
-            assert calc == pytest.approx(pub, abs=0.1)
+            assert calc == pytest.approx(pub, abs=0.01)
 
         mean = calc_mean_of_deviation(calc_values[:, 1], pub_values[:, 1])
 
@@ -634,13 +646,15 @@ class TestBilayerVesicleInterface:
         """
         lit = literature.LiteratureData()
         pub_values = lit.interface_bilayer_vesicle_C8_330
-        mic = micelle.BilayerVesicle.optimised_radii(125, 330, 8, throw_errors=True)
+        mic = micelle.BilayerVesicle.optimised_radii(
+            pub_values[0, 0], 330, 8, throw_errors=False
+        )
         fig, ax = create_fig(1, 1)
         ax = ax[0]
         calc_values = np.zeros(pub_values.shape)
         for i, g in enumerate(pub_values[:, 0]):
             mic._g = g
-            mic.optimise_radii()
+            mic.optimise_radii(hot_start=False)
             calc_values[i, 0] = g
             calc_values[i, 1] = mic.get_interface_free_energy()
 
@@ -649,10 +663,12 @@ class TestBilayerVesicleInterface:
 
         ax.legend()
 
-        save_to_file(os.path.join(this_path, "regress_interface_free_energy_bil_ves"))
+        save_to_file(
+            os.path.join(this_path, "regress_interface_free_energy_bil_ves_C8_330")
+        )
 
         for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
-            assert calc == pytest.approx(pub, abs=0.1)
+            assert calc == pytest.approx(pub, abs=0.01)
 
         mean = calc_mean_of_deviation(calc_values[:, 1], pub_values[:, 1])
 

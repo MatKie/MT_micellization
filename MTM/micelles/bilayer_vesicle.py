@@ -129,6 +129,7 @@ class BilayerVesicle(BaseMicelle):
             or self.thickness_outer < 0
         ):
             return False
+        return True
 
     @property
     def radius_outer(self):
@@ -374,7 +375,7 @@ class BilayerVesicle(BaseMicelle):
         _g_out = self.surfactants_number_outer
         _area_outer = self.area_per_surfactant_outer
 
-        if _area_outer < _headgroup_area or _area_inner < _headgroup_area:
+        if _area_outer < _headgroup_area:
             _steric_out = 10.0
         else:
             _steric_out = aux(_headgroup_area, _area_outer, _g_out, _surfactants_number)
