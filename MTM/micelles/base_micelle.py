@@ -8,7 +8,7 @@ class BaseMicelle(object):
     """
     This class serves as base to calculate the free energy difference
     between a surfactant in a micelle of certain aggregation size and
-    the surfactant dispersed in an aqueous solution. 
+    the surfactant dispersed in an aqueous solution.
     See:
     S.Enders and D.Haentzschel: Fluid Phase Equilibria 153 1998 1–21 Z.
                                Thermodynamics
@@ -26,15 +26,15 @@ class BaseMicelle(object):
         Parameters
         ----------
         surfactants_number : float
-            Number of surfactants per micelle. Only integer values 
+            Number of surfactants per micelle. Only integer values
             are sensible, but float for sake of optimisation.
         temperature : float
             system temperature.
         tail_carbons : float
-            Number of carbons in the surfactant tail. Only integer 
+            Number of carbons in the surfactant tail. Only integer
             values are sensible, but float for sake of optimisation.
         headgroup_area : float
-            Headgroup cross sectional area in nm^2. 
+            Headgroup cross sectional area in nm^2.
             Optional, default 0.49.
         Attributes:
         -----------
@@ -61,15 +61,15 @@ class BaseMicelle(object):
         steric_method="VdW",
     ):
         """
-        Call all contributions to chemical potential incentive 
-        towards micellisation and sum up. 
+        Call all contributions to chemical potential incentive
+        towards micellisation and sum up.
         Contributions are: transfer, interface, deformation and
                            steric.
 
         Parameters
         ----------
         transfer_method: str, optional
-            Which method used to calculate transfer free energy. By 
+            Which method used to calculate transfer free energy. By
             defualt 'empirical'.
         interface_method: str, optional
             Which method used to calculate contribution from interface
@@ -79,11 +79,11 @@ class BaseMicelle(object):
             interface contribution. By default 'flat'.
         deformation_method: str, optional
             Which method to use for deformation free energy. By default
-            'nagarajan'. 
+            'nagarajan'.
         steric_method: str, optional
             Which method to use for steric interactions of headgroups.
             By default 'VdW'.
-        
+
         Returns
         -------
         float
@@ -116,6 +116,10 @@ class BaseMicelle(object):
         Geometrical surface area of respective micelle shape over
         the number of surfactants in the shape.
         """
+
+    @property
+    def geometry_check(self):
+        return True
 
     @property
     def segment_length(self):
@@ -218,7 +222,7 @@ class BaseMicelle(object):
 
     def get_transfer_free_energy(self, method="empirical"):
         """
-        High level function to get transfer free energy. 
+        High level function to get transfer free energy.
         Dependent only on number of carbons in tail.
 
         Parameters
@@ -335,7 +339,7 @@ class BaseMicelle(object):
         Returns
         -------
         float
-            Steric free energy in k_b * T. 
+            Steric free energy in k_b * T.
         """
         methods = {"VdW": self._steric_vdw}
         _free_energy_method = methods.get(method)
@@ -349,7 +353,7 @@ class BaseMicelle(object):
     def _steric_vdw(self):
         """
         Steric free energy from VdW approach.
-        Returns a float, free energy in kT. 
+        Returns a float, free energy in kT.
         """
 
     def get_deformation_free_energy(self, method="nagarajan"):
@@ -386,4 +390,3 @@ class BaseMicelle(object):
             *methods.keys()
         )
         raise NotImplementedError(error_string)
-

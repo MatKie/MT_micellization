@@ -104,8 +104,8 @@ class RodlikeMicelle(BaseMicelle):
         self._r_sph = variables[0]
         self._r_cyl = variables[1]
         obj_function = self.get_delta_chempot()
-        if self.area_per_surfactant < 0 or self.surfactants_number_cyl < 0:
-            obj_function = 1
+        if self.geometry_check:
+            obj_function = 10
         return obj_function
 
     def _starting_values(self):
@@ -115,6 +115,18 @@ class RodlikeMicelle(BaseMicelle):
         r_cyl = length * 0.7
 
         return r_sph, r_cyl
+
+    @property
+    def geometry_check(self):
+        if (
+            self.area_per_surfactant < 0
+            or self.surfactants_number_cyl < 0
+            or self.surfactants_number_cap < 0
+            or self.area_per_surfactant_cyl < 0
+            or self.area_per_surfactant_cap < 0
+        ):
+            return False
+        return True
 
     @property
     def radius_sphere(self):
