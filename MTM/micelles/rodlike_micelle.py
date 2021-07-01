@@ -11,19 +11,18 @@ class RodlikeMicelle(BaseMicelle):
     rodlike micelles.
 
     High level functionality implemented in BaseMicelle class -- see
-    main methods there. 
+    main methods there.
     """
 
     def __init__(self, *args, throw_errors=False):
         super().__init__(*args)
-        self._r_sph = 1.3
-        self._r_cyl = 1.0
+        self._r_sph, self._r_cyl = self._starting_values()
         self.throw_errors = throw_errors
 
     @classmethod
     def optimised_radii(cls, *args, **kwargs):
         """
-        Return an instance with the radii already optmised via 
+        Return an instance with the radii already optmised via
         self.optimise_radii()
 
         Returns
@@ -35,33 +34,37 @@ class RodlikeMicelle(BaseMicelle):
         instance.optimise_radii()
         return instance
 
-    def optimise_radii(self, method="derivative", hot_start=True, x_0=[1.3, 1.0]):
+    def optimise_radii(self, method="derivative", hot_start=True, x_0=None):
         """
-        Optimise the radii of the rodlike micelle parts for minimal 
+        Optimise the radii of the rodlike micelle parts for minimal
         chemical potential difference.
 
         Parameters
         ----------
         method : str, optional
-            'derivative' for finding the radii via a root search of 
-            the jacobian and 'objective' for finding the radii via 
+            'derivative' for finding the radii via a root search of
+            the jacobian and 'objective' for finding the radii via
             an optimisation of the objective function, by default "derivative"
         hot_start : bool, optional
             Use current values of radius of spherical endcaps and radius
             of cylinder for starting values, by default True
         x_0 : list, optional
-            starting values for radius of spherical endcaps and radius 
+            starting values for radius of spherical endcaps and radius
             of cylinder, by default [1.3, 1.0]
 
         Raises
         ------
         RuntimeError
-            if optimisation is not totally successful 
+            if optimisation is not totally successful
             (if self.throw_error=False it's a warning)
         """
         Derivatives = RodlikeMicelleDerivative(self)
         if hot_start:
             x_0 = [self.radius_sphere, self.radius_cylinder]
+        elif x_0 is not None:
+            pass
+        elif x_0 is None:
+            x_0 = list(self._starting_values())
 
         if method == "derivative":
             Optim = root(
@@ -104,6 +107,14 @@ class RodlikeMicelle(BaseMicelle):
         if self.area_per_surfactant < 0 or self.surfactants_number_cyl < 0:
             obj_function = 1
         return obj_function
+
+    def _starting_values(self):
+        # rsph
+        length = self.length
+        r_sph = length * 0.9
+        r_cyl = length * 0.7
+
+        return r_sph, r_cyl
 
     @property
     def radius_sphere(self):
