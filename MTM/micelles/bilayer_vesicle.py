@@ -46,10 +46,14 @@ class BilayerVesicle(BaseMicelle):
         ----------
         method : str, optional
             'objective' for finding the radii via
+<<<<<<< HEAD
             an optimisation of the objective function and "derivative"
             for finding the roots of the derivatives of the objective
             function, by default "objective"
 
+=======
+            an optimisation of the objective function, by default "objective"
+>>>>>>> Add geometry_check property, calculate free energy minima
         hot_start : bool, optional
             Use current values of outer radius and outer thickness.
             If false estimate from assumption of equal number of surfactans
@@ -59,7 +63,10 @@ class BilayerVesicle(BaseMicelle):
         ------
         RuntimeError
             if optimisation is not totally successful
+<<<<<<< HEAD
 
+=======
+>>>>>>> Add geometry_check property, calculate free energy minima
             (if self.throw_error=False it's a warning)
         NotImplementedError
             if a method was chosen which is not implemented
@@ -106,7 +113,7 @@ class BilayerVesicle(BaseMicelle):
         self._r_out = variables[0]
         self._t_out = variables[1]
         obj_function = self.get_delta_chempot()
-        if not self._check_geometry():
+        if self.geometry_check:
             obj_function = 10
         return obj_function
 
@@ -116,7 +123,10 @@ class BilayerVesicle(BaseMicelle):
 
         Outer radius and thickness are set so that half of the surfactant
         is in the outer/inner layer and the inside surface area per surfactant
+<<<<<<< HEAD
 
+=======
+>>>>>>> Add geometry_check property, calculate free energy minima
         is 10% higher than the headgroup area.
 
         Returns
@@ -137,7 +147,8 @@ class BilayerVesicle(BaseMicelle):
 
         return [r_outer, t_outer]
 
-    def _check_geometry(self):
+    @property
+    def geometry_check(self):
         if (
             self.surfactants_number_outer < 0
             or self.surfactants_number_inner < 0
@@ -145,6 +156,8 @@ class BilayerVesicle(BaseMicelle):
             or self.radius_outer < 0
             or self.thickness_inner < 0
             or self.thickness_outer < 0
+            or self.area_per_surfactant_outer < 0
+            or self.area_per_surfactant_inner < 0
         ):
             return False
         return True
