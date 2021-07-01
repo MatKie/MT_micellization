@@ -3,6 +3,8 @@ from .micelles.rodlike_micelle import RodlikeMicelle
 from .micelles.globular_micelle import GlobularMicelle
 from .micelles.bilayer_vesicle import BilayerVesicle
 import numpy as np
+from scipy.optimize import newton, root_scalar
+from functools import reduce
 
 
 class MTSystem(object):
@@ -105,3 +107,33 @@ class MTSystem(object):
         self.free_energy_types = [wanted_keys[i] for i in self.free_energy_types]
 
         return self.free_energy_minimas
+
+    def get_monomer_concentration(self, surfactant_conc, *args):
+
+        if self.free_energy_minimas is None:
+            free_energy_minimas = self.get_free_energy_minimas(*args)
+        else:
+            free_energy_minimas = self.free_energy_minimas
+
+        free_energy_minimas[0] = 0.0
+
+        def objective(monomer_conc, surfactant_conc):
+            X_acc = sum(self.get_aggregate_distribution(monomer_conc))
+            return surfactant_conc - X_acc
+
+        # x_0 = newton(objective, 0.01, args=(surfactant_conc,))
+
+        # Seems to be a starting value issue..
+        roots = root_scalar(objective, args=(surfactant_conc,), x0=1e-4, x1=2e-4)
+
+        self.monomer_concentration = roots
+
+        _ = self.get_aggregate_distribution
+
+    def get_aggregate_distribution(self, monomer_conc):
+        self.aggregate_distribution = np.zeros(self.free_energy_minimas.shape)
+        for i, mu_min in enumerate(self.free_energy_minimas):
+            g = i + 1
+            this_value = g * np.exp(g * (1.0 + np.log(monomer_conc) - mu_min) - 1.0)
+            self.aggregate_distribution[i] = this_value
+        return self.aggregate_distribution
