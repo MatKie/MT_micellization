@@ -514,6 +514,15 @@ class TestRodlikeMicelleFullFreeEnergy:
         run_and_assert([1.2, 1.0])
         run_and_assert([1.0, 0.8])
 
+    def test_problem_case(self):
+        sizes = np.arange(1, 400)
+        mic = micelle.RodlikeMicelle(60, 298.15, 8, throw_errors=False)
+        for size in sizes:
+            mic.surfactants_number = size
+            mic.optimise_radii(hot_start=False)
+            chempot = mic.get_delta_chempot()
+            # assert not np.isnan(chempot)
+
 
 class TestGlobularMicelleFullFreeEnergy:
     """
