@@ -15,7 +15,12 @@ class BaseMicelle(object):
     """
 
     def __init__(
-        self, surfactants_number, temperature, tail_carbons, headgroup_area=0.49
+        self,
+        surfactants_number,
+        temperature,
+        tail_carbons,
+        headgroup_area=0.49,
+        **kwargs
     ):
         """
         Parameters
