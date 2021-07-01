@@ -46,9 +46,6 @@ class SphericalMicelle(BaseMicelle):
         _headgroup_area = self.headgroup_area
         _area_per_surfactant = self.area_per_surfactant
         if _headgroup_area >= _area_per_surfactant:
-            raise ValueError(
-                "headgroup area larger than area \
-                per surfactant."
-            )
+            return 10
         else:
             return -np.log(1 - (_headgroup_area / _area_per_surfactant))
