@@ -10,8 +10,14 @@ sys.path.append("../")
 this_path = os.path.dirname(__file__)
 
 
-class TestInit:
-    def test_init(self):
+class TestGetFreeEnergyMinimas:
+    def test_return(self):
         MTS = MTSystem()
         ret = MTS.get_free_energy_minimas(g_0=80)
-        assert ret is True
+        assert isinstance(ret, np.ndarray)
+
+
+class TestGetMonomerConcentration:
+    def test_return(self):
+        MTS = MTSystem()
+        ret = MTS.get_monomer_concentration(0.1)
