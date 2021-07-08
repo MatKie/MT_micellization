@@ -16,6 +16,9 @@ class TestGetFreeEnergyMinimas:
         ret = MTS.get_free_energy_minimas(g_0=80)
         assert isinstance(ret, np.ndarray)
 
+    def regress_combined_minima(self):
+        pass
+
 
 class TestGetMonomerConcentration:
     def test_return(self):

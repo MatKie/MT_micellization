@@ -124,7 +124,9 @@ class MTSystem(object):
         # x_0 = newton(objective, 0.01, args=(surfactant_conc,))
 
         # Seems to be a starting value issue..
-        roots = root_scalar(objective, args=(surfactant_conc,), x0=1e-4, x1=2e-4)
+        roots = root_scalar(
+            objective, args=(surfactant_conc,), bracket=(1e-3, 2e-6), method="brentq"
+        )
 
         self.monomer_concentration = roots
 

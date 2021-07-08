@@ -113,7 +113,7 @@ class BilayerVesicle(BaseMicelle):
         self._r_out = variables[0]
         self._t_out = variables[1]
         obj_function = self.get_delta_chempot()
-        if self.geometry_check:
+        if not self.geometry_check:
             obj_function = 10
         return obj_function
 
