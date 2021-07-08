@@ -521,7 +521,7 @@ class TestRodlikeMicelleFullFreeEnergy:
             mic.surfactants_number = size
             mic.optimise_radii(hot_start=False)
             chempot = mic.get_delta_chempot()
-            # assert not np.isnan(chempot)
+            assert not np.isnan(chempot)
 
 
 class TestGlobularMicelleFullFreeEnergy:

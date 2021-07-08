@@ -151,9 +151,9 @@ class BilayerVesicle(BaseMicelle):
     def geometry_check(self):
         if (
             self.surfactants_number_outer < 0
-            or self.surfactants_number_inner < 0
+            or self.surfactants_number_inner < 1
             or self.radius_inner < 0
-            or self.radius_outer < 0
+            or self.radius_outer < self.length
             or self.thickness_inner < 0
             or self.thickness_outer < 0
             or self.area_per_surfactant_outer < 0

@@ -7,7 +7,7 @@ class LiteratureData(object):
     """
     Data used to compare our results again taken from:
 
-    Enders: 
+    Enders:
     S.Enders and D.Haentschel: Fluid Phase Equilibria 153 1998 1–21 Z.
                                Thermodynamics
     Reinhardt:
@@ -72,6 +72,9 @@ class LiteratureData(object):
         # Reinhardt Fig 4b, grey line
         self.interface_bilayer_vesicle_C8_330 = self.read_data(
             os.path.join(datapath, "interface_bil_ves_C8_330.csv")
+        )
+        self.overall_minima_C8_298 = self.read_data(
+            os.path.join(datapath, "overall_minima_C8_298.csv")
         )
 
     @staticmethod
