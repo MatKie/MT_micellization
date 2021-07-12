@@ -76,6 +76,14 @@ class LiteratureData(object):
         self.overall_minima_C8_298 = self.read_data(
             os.path.join(datapath, "overall_minima_C8_298.csv")
         )
+        self.Xg_C8_X_15 = self.read_data(os.path.join(datapath, "Xg_C8_X_15.csv"))
+        self.Xg_C10_X_15 = self.read_data(os.path.join(datapath, "Xg_C10_X_15.csv"))
+        self.Xg_C12_X_15_fig6 = self.read_data(
+            os.path.join(datapath, "Xg_C12_X_15_fig6.csv")
+        )
+        self.Xg_C12_X_15 = self.read_data(os.path.join(datapath, "Xg_C12_X_15.csv"))
+        self.Xg_C12_X_05 = self.read_data(os.path.join(datapath, "Xg_C12_X_05.csv"))
+        self.Xg_C12_X_005 = self.read_data(os.path.join(datapath, "Xg_C12_X_005.csv"))
 
     @staticmethod
     def read_data(path):
