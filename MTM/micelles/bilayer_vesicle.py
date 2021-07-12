@@ -156,6 +156,9 @@ class BilayerVesicle(BaseMicelle):
             or self.radius_outer < self.length
             or self.thickness_inner < 0
             or self.thickness_outer < 0
+            # If you put self.headgroup_area as lower bound it will make
+            # the optimisation go to more negative chempot differences
+            # sooner -- not bad by itself but not the 'published' behaviour.
             or self.area_per_surfactant_outer < 0
             or self.area_per_surfactant_inner < 0
         ):

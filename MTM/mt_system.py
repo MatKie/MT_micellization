@@ -22,14 +22,23 @@ class MTSystem(object):
     }
 
     def __init__(
-        self, T=298.15, m=8, spheres=True, globular=False, rodlike=True, vesicles=True
+        self,
+        T=298.15,
+        m=8,
+        surfactant_concentration=None,
+        spheres=True,
+        globular=False,
+        rodlike=True,
+        vesicles=True,
     ):
         self.free_energy_minimas = None
         self.free_energy_types = None
+        self.monomer_concentration = None
         self.wanted_keys = None  # set by next function
         self.micelles = self.get_micelles(
             T, m, spheres=spheres, globular=globular, rodlike=rodlike, vesicles=vesicles
         )
+        self.surfactant_concentration = surfactant_concentration
         self.T = T
         self.m = m
 
@@ -53,7 +62,7 @@ class MTSystem(object):
             array)
         """
         # n is the maximal aggregation number
-        n = 400
+        n = 500
         if T is not None or m is not None:
             # It's either updated or the same...
             self.micelles = self.get_micelles(
@@ -81,6 +90,8 @@ class MTSystem(object):
             axis=1,
             arr=chempots_and_minima,
         )
+
+        self.free_energy_minimas[0] = 0.0
 
         self.free_energy_types = [self.wanted_keys[i] for i in self.free_energy_types]
 
@@ -155,34 +166,63 @@ class MTSystem(object):
                 chempots[i] = 101
         return chempots
 
-    def get_monomer_concentration(self, surfactant_conc, *args):
+    def get_monomer_concentration(self, surfactant_concentration=None, *args):
+        if surfactant_concentration is None:
+            surfactant_concentration = self.surfactant_concentration
+        elif surfactant_concentration is None and self.surfactant_concentration is None:
+            raise ValueError(
+                "Please supply surfactant concentration upon system creation or when calling this method"
+            )
+        else:
+            self.surfactant_concentration = surfactant_concentration
 
         if self.free_energy_minimas is None:
-            free_energy_minimas = self.get_free_energy_minimas(*args)
-        else:
-            free_energy_minimas = self.free_energy_minimas
+            _ = self.get_free_energy_minimas(*args)
 
-        free_energy_minimas[0] = 0.0
+        def objective(monomer_conc, surfactant_concentration):
+            X_acc = sum(
+                map(
+                    lambda x: (x[0] + 1) * x[1],
+                    enumerate(self.get_aggregate_distribution(monomer_conc)),
+                )
+            )
+            return 1.0 - X_acc / surfactant_concentration
 
-        def objective(monomer_conc, surfactant_conc):
-            X_acc = sum(self.get_aggregate_distribution(monomer_conc))
-            return surfactant_conc - X_acc
-
-        # x_0 = newton(objective, 0.01, args=(surfactant_conc,))
+        # x_0 = newton(objective, 0.01, args=(surfactant_concentration,))
 
         # Seems to be a starting value issue..
         roots = root_scalar(
-            objective, args=(surfactant_conc,), bracket=(1e-3, 2e-6), method="brentq"
+            objective,
+            args=(surfactant_concentration,),
+            bracket=(1e-3, 2e-7),
+            method="brentq",
         )
 
-        self.monomer_concentration = roots
+        if roots.converged is True:
+            self.monomer_concentration = roots.root
+        else:
+            raise RuntimeError(
+                "Error message from root finding: {:s}".format(roots.flag)
+            )
 
-        _ = self.get_aggregate_distribution
+        return self.monomer_concentration
 
-    def get_aggregate_distribution(self, monomer_conc):
+    def get_aggregate_distribution(self, monomer_conc=None):
+        if monomer_conc is None:
+            monomer_conc = self.get_monomer_concentration()
         self.aggregate_distribution = np.zeros(self.free_energy_minimas.shape)
         for i, mu_min in enumerate(self.free_energy_minimas):
             g = i + 1
-            this_value = g * np.exp(g * (1.0 + np.log(monomer_conc) - mu_min) - 1.0)
+            this_value = self.get_aggregate_concentration(g, monomer_conc, mu_min)
             self.aggregate_distribution[i] = this_value
         return self.aggregate_distribution
+
+    def get_aggregate_concentration(self, g, monomer_conc=None, mu_min=None):
+        if monomer_conc is None:
+            monomer_conc = self.monomer_concentration
+        if mu_min is None:
+            mu_min = min(self.get_chempots(g))
+
+        this_value = np.exp(g * (1.0 + np.log(monomer_conc) - mu_min) - 1.0)
+        return this_value
+

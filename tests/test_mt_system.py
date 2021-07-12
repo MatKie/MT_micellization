@@ -42,13 +42,113 @@ class TestGetFreeEnergyMinimas:
         """
         At very low aggregation numbers spherical micelles _should_ be the
         smallest..
+        The switch is around agg.nr. 28. Hence 29 should be bil.ves. and
+        27 spherical.
         """
+        MTS = MTSystem()
+        values = MTS.get_chempots(29)
+        assert values[0] > values[2]
         MTS = MTSystem()
         values = MTS.get_chempots(27)
         assert values[0] < values[2]
+
+    def test_vesicle_inflection(self):
+        """
+        This is a debug test to look at geometries of micelles both
+        sides of the inflection point.
+        """
+        MTSSmall = MTSystem()
+        MTSBig = MTSystem()
+
+        _ = MTSSmall.get_chempots(26)
+        _ = MTSBig.get_chempots(27)
+
+        SmallMicelle = MTSSmall.micelles[2]
+        BigMicelle = MTSBig.micelles[2]
+
+        assert SmallMicelle.geometry_check == True
+        assert BigMicelle.geometry_check == True
 
 
 class TestGetMonomerConcentration:
     def test_return(self):
         MTS = MTSystem()
         ret = MTS.get_monomer_concentration(0.1)
+
+    def compare(self, pub, MTS, factor=1e6):
+        calc = np.zeros(pub.shape)
+        MTS.get_monomer_concentration()
+        for i, size in enumerate(pub[:, 0]):
+            calc[i, 0] = size
+            calc[i, 1] = factor * MTS.get_aggregate_concentration(size)
+
+        for (size, pubi), calci in zip(enumerate(pub[:, 1]), calc[:, 1]):
+            try:
+                assert calci == pytest.approx(pubi, abs=1)
+            except AssertionError:
+                flag = False
+                mssg = "Assertion error for system: Xs {:f}, C {:d} at size {:f}".format(
+                    MTS.surfactant_concentration, MTS.m, calc[size, 0]
+                )
+                return calc, flag, mssg
+        return calc, True, ""
+
+    def test_regress_concentrations(self):
+        lit = literature.LiteratureData()
+        fig, ax = create_fig(1, 1)
+        ax = ax[0]
+        pub = lit.Xg_C12_X_005
+        MTS = MTSystem(T=298, m=12, surfactant_concentration=0.005)
+        calc, flag1, mssg1 = self.compare(pub, MTS)
+        color = "C0"
+        ax.plot(pub[:, 0], pub[:, 1], color=color, label="X005")
+        ax.plot(calc[:, 0], calc[:, 1], ls="", marker="o", color=color)
+
+        pub = lit.Xg_C12_X_05
+        MTS = MTSystem(T=298, m=12, surfactant_concentration=0.05)
+        calc, flag2, mssg2 = self.compare(pub, MTS)
+        color = "C1"
+        ax.plot(pub[:, 0], pub[:, 1], color=color, label="X05")
+        ax.plot(calc[:, 0], calc[:, 1], ls="", marker="o", color=color)
+
+        pub = lit.Xg_C12_X_15
+        MTS = MTSystem(T=298, m=12, surfactant_concentration=0.15)
+        calc, flag3, mssg3 = self.compare(pub, MTS)
+        color = "C3"
+        ax.plot(pub[:, 0], pub[:, 1], color=color, label="X15")
+        ax.plot(calc[:, 0], calc[:, 1], ls="", marker="o", color=color)
+
+        ax.legend()
+        save_to_file(os.path.join(this_path, "regress_concentration_distributions"))
+
+        if not flag1 or not flag2 or not flag3:
+            raise AssertionError("{:s}\n\n{:s}\n\n{:s}".format(mssg1, mssg2, mssg3))
+
+    def test_regress_taillengths(self):
+        lit = literature.LiteratureData()
+        fig, ax = create_fig(1, 1)
+        ax = ax[0]
+        pub = lit.Xg_C8_X_15
+        MTS = MTSystem(T=298, m=8, surfactant_concentration=0.15)
+        calc, flag1, mssg1 = self.compare(pub, MTS, factor=1e5)
+        color = "C0"
+        ax.plot(pub[:, 0], pub[:, 1], color=color, label="C8")
+        ax.plot(calc[:, 0], calc[:, 1], ls="", marker="o", color=color)
+        pub = lit.Xg_C10_X_15
+        MTS = MTSystem(T=298, m=10, surfactant_concentration=0.15)
+        calc, flag2, mssg2 = self.compare(pub, MTS, factor=1e5)
+        color = "C1"
+        ax.plot(pub[:, 0], pub[:, 1], color=color, label="C10")
+        ax.plot(calc[:, 0], calc[:, 1], ls="", marker="o", color=color)
+        pub = lit.Xg_C12_X_15_fig6
+        MTS = MTSystem(T=298, m=12, surfactant_concentration=0.15)
+        calc, flag3, mssg3 = self.compare(pub, MTS, factor=1e5)
+        color = "C3"
+        ax.plot(pub[:, 0], pub[:, 1], color=color, label="C12")
+        ax.plot(calc[:, 0], calc[:, 1], ls="", marker="o", color=color)
+
+        ax.legend()
+        save_to_file(os.path.join(this_path, "regress_taillength_distributions"))
+
+        if not flag1 or not flag2 or not flag3:
+            raise AssertionError("{:s}\n\n{:s}\n\n{:s}".format(mssg1, mssg2, mssg3))
