@@ -62,7 +62,7 @@ class MTSystem(object):
             array)
         """
         # n is the maximal aggregation number
-        n = 500
+        n = 1000
         if T is not None or m is not None:
             # It's either updated or the same...
             self.micelles = self.get_micelles(
@@ -179,22 +179,13 @@ class MTSystem(object):
         if self.free_energy_minimas is None:
             _ = self.get_free_energy_minimas(*args)
 
-        def objective(monomer_conc, surfactant_concentration):
-            X_acc = sum(
-                map(
-                    lambda x: (x[0] + 1) * x[1],
-                    enumerate(self.get_aggregate_distribution(monomer_conc)),
-                )
-            )
-            return 1.0 - X_acc / surfactant_concentration
-
         # x_0 = newton(objective, 0.01, args=(surfactant_concentration,))
 
         # Seems to be a starting value issue..
         roots = root_scalar(
-            objective,
+            self.mass_balance_objective,
             args=(surfactant_concentration,),
-            bracket=(1e-3, 2e-7),
+            bracket=(1e0, 1e-10),
             method="brentq",
         )
 
@@ -206,6 +197,19 @@ class MTSystem(object):
             )
 
         return self.monomer_concentration
+
+    def mass_balance_objective(self, monomer_conc, surfactant_concentration):
+        X_acc = self.mass_balance(monomer_conc)
+        return 1.0 - surfactant_concentration / X_acc
+
+    def mass_balance(self, monomer_conc):
+        X_acc = sum(
+            map(
+                lambda x: (x[0] + 1) * x[1],
+                enumerate(self.get_aggregate_distribution(monomer_conc)),
+            )
+        )
+        return X_acc
 
     def get_aggregate_distribution(self, monomer_conc=None):
         if monomer_conc is None:
@@ -220,8 +224,19 @@ class MTSystem(object):
     def get_aggregate_concentration(self, g, monomer_conc=None, mu_min=None):
         if monomer_conc is None:
             monomer_conc = self.monomer_concentration
-        if mu_min is None:
-            mu_min = min(self.get_chempots(g))
+        if mu_min is None and g > 1:
+            mu_min_direct = min(self.get_chempots(g))
+            # Check against linear interpolation in case there is an initial
+            # value problem.
+            x0 = int(np.floor(g))
+            f0, f1 = self.free_energy_minimas[x0 - 1], self.free_energy_minimas[x0]
+            mu_min_interpol = f0 + (g - x0) * (f1 - f0)
+            if mu_min_direct < f0 and mu_min_direct > f1:
+                mu_min = mu_min_direct
+            else:
+                mu_min = mu_min_interpol
+        elif mu_min is None and g <= 1:
+            mu_min = 0.0
 
         this_value = np.exp(g * (1.0 + np.log(monomer_conc) - mu_min) - 1.0)
         return this_value
