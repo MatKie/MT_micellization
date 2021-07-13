@@ -38,19 +38,25 @@ class TestGetFreeEnergyMinimas:
         for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
             assert calc == pytest.approx(pub, abs=0.0075)
 
-    def test_sph_vs_vesicle(self):
+    def test_sph_vs_vesicle_lower(self):
         """
         At very low aggregation numbers spherical micelles _should_ be the
         smallest..
-        The switch is around agg.nr. 28. Hence 29 should be bil.ves. and
-        27 spherical.
+        The switch is around agg.nr. 28. Hence 27 should be spherical.
+        """
+        MTS = MTSystem()
+        values = MTS.get_chempots(27)
+        assert values[0] < values[2]
+
+    def test_sph_vs_vesicle_upper(self):
+        """
+        At very low aggregation numbers spherical micelles _should_ be the
+        smallest..
+        The switch is around agg.nr. 28. Hence 29 should be bil.ves.
         """
         MTS = MTSystem()
         values = MTS.get_chempots(29)
         assert values[0] > values[2]
-        MTS = MTSystem()
-        values = MTS.get_chempots(27)
-        assert values[0] < values[2]
 
     def test_vesicle_inflection(self):
         """
@@ -87,8 +93,10 @@ class TestGetMonomerConcentration:
                 assert calci == pytest.approx(pubi, abs=1)
             except AssertionError:
                 flag = False
-                mssg = "Assertion error for system: Xs {:f}, C {:d} at size {:f}".format(
-                    MTS.surfactant_concentration, MTS.m, calc[size, 0]
+                mssg = (
+                    "Assertion error for system: Xs {:f}, C {:d} at size {:f}".format(
+                        MTS.surfactant_concentration, MTS.m, calc[size, 0]
+                    )
                 )
                 return calc, flag, mssg
         return calc, True, ""
