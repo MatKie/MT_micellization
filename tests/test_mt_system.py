@@ -38,6 +38,27 @@ class TestGetFreeEnergyMinimas:
         for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
             assert calc == pytest.approx(pub, abs=0.0075)
 
+    def test_plot_combined_minima(self):
+        if os.path.isfile(os.path.join(this_path, "plot_combined_minima.png")):
+            return True
+        fig, ax = create_fig(1, 1)
+        ax = ax[0]
+
+        for i, item in enumerate([8, 10, 12]):
+            MTS = MTSystem(m=item)
+            minimas = MTS.get_free_energy_minimas()
+            ax.plot(
+                MTS.sizes, minimas, label="{:d}".format(item), color="C{:d}".format(i)
+            )
+            ax.plot(MTS.sizes, minimas, ls="", marker="o", color="C{:d}".format(i))
+
+        ax.legend()
+        ax.axvline(28, ls="--", color="C0", lw=2)
+        ax.axvline(56, ls="--", color="C2", lw=2)
+        ax.set_xlim(0, 75)
+
+        save_to_file(os.path.join(this_path, "plot_combined_minima"))
+
     def test_sph_vs_vesicle_lower(self):
         """
         At very low aggregation numbers spherical micelles _should_ be the
@@ -56,6 +77,26 @@ class TestGetFreeEnergyMinimas:
         """
         MTS = MTSystem()
         values = MTS.get_chempots(29)
+        assert values[0] > values[2]
+
+    def test_sph_vs_vesicle_lower_m12(self):
+        """
+        At very low aggregation numbers spherical micelles _should_ be the
+        smallest..
+        The switch is around agg.nr. 56. Hence 55 should be spherical.
+        """
+        MTS = MTSystem(m=12)
+        values = MTS.get_chempots(55)
+        assert values[0] < values[2]
+
+    def test_sph_vs_vesicle_upper_m12(self):
+        """
+        At very low aggregation numbers spherical micelles _should_ be the
+        smallest..
+        The switch is around agg.nr. 56. Hence 57 should be bil.ves.
+        """
+        MTS = MTSystem(m=12)
+        values = MTS.get_chempots(57)
         assert values[0] > values[2]
 
     def test_vesicle_inflection(self):
@@ -93,10 +134,8 @@ class TestGetMonomerConcentration:
                 assert calci == pytest.approx(pubi, abs=1)
             except AssertionError:
                 flag = False
-                mssg = (
-                    "Assertion error for system: Xs {:f}, C {:d} at size {:f}".format(
-                        MTS.surfactant_concentration, MTS.m, calc[size, 0]
-                    )
+                mssg = "Assertion error for system: Xs {:f}, C {:d} at size {:f}".format(
+                    MTS.surfactant_concentration, MTS.m, calc[size, 0]
                 )
                 return calc, flag, mssg
         return calc, True, ""
