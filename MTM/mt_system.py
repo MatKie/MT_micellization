@@ -31,6 +31,7 @@ class MTSystem(object):
         rodlike=True,
         vesicles=True,
     ):
+        self.sizes = None
         self.free_energy_minimas = None
         self.free_energy_types = None
         self.monomer_concentration = None
@@ -41,6 +42,7 @@ class MTSystem(object):
         self.surfactant_concentration = surfactant_concentration
         self.T = T
         self.m = m
+        self._bounds = (1, 1000)
 
     def get_free_energy_minimas(self, T=None, m=None, **kwargs):
         """
@@ -62,19 +64,20 @@ class MTSystem(object):
             array)
         """
         # n is the maximal aggregation number
-        n = 1000
         if T is not None or m is not None:
             # It's either updated or the same...
             self.micelles = self.get_micelles(
                 T, m, **{k: True for k in self.wanted_keys}
             )
 
-        sizes = np.arange(1, n)
-        chempots = np.zeros((n - 1, len(self.wanted_keys)))
+        n_start = self._bounds[0]
+        n_end = self._bounds[-1]
+        self.sizes = np.arange(n_start, n_end)
+        chempots = np.zeros((n_end - n_start, len(self.wanted_keys)))
 
         # Loop over sizes and micelle types, if it's optimisable do it.
         # If optimised geometry is not feasible give arbitrary high value.
-        for i, size in enumerate(sizes):
+        for i, size in enumerate(self.sizes):
             chempots[i, :] = self.get_chempots(size)
 
         # Get the minima
@@ -90,8 +93,6 @@ class MTSystem(object):
             axis=1,
             arr=chempots_and_minima,
         )
-
-        self.free_energy_minimas[0] = 0.0
 
         self.free_energy_types = [self.wanted_keys[i] for i in self.free_energy_types]
 
@@ -167,6 +168,31 @@ class MTSystem(object):
         return chempots
 
     def get_monomer_concentration(self, surfactant_concentration=None, *args):
+        """
+        Iterates the monomer concentration until the mass balance is satisfied.
+        Since X_g is given as a function of monomer concentration and 
+        difference in chemical potential alone, where the latter is given
+        independently, this is the following problem of roof finding:
+
+        X_s = \sum_g=1^\infty g * X_g(X_1; delta_mu(g))
+
+        Parameters
+        ----------
+        surfactant_concentration : float, optional
+            Taken from instance if specified before and None, by default None
+
+        Returns
+        -------
+        float
+            monomer concentration
+
+        Raises
+        ------
+        ValueError
+            In case no concentration owas specified here or before.
+        RuntimeError
+            In case root finding was not successful
+        """
         if surfactant_concentration is None:
             surfactant_concentration = self.surfactant_concentration
         elif surfactant_concentration is None and self.surfactant_concentration is None:
@@ -199,31 +225,98 @@ class MTSystem(object):
         return self.monomer_concentration
 
     def mass_balance_objective(self, monomer_conc, surfactant_concentration):
+        """
+        Objective function as 1 - \sum_g g*X_g / X_s == 0
+
+        Parameters
+        ----------
+        monomer_conc : float
+            momoner concentration as molefrac
+        surfactant_concentration : float
+            surfactant concentration as molefrac
+
+        Returns
+        -------
+        float
+            zero if monomer concentration fits surfactant concentration.
+        """
         X_acc = self.mass_balance(monomer_conc)
-        return 1.0 - surfactant_concentration / X_acc
+        return 1.0 - X_acc / surfactant_concentration
 
     def mass_balance(self, monomer_conc):
+        """
+        Mass balance in dependence of monomer concentration
+
+        MB = \sum_g=1^\infty g * exp(g*(1 + ln(X_1) - d_mu(g)) - 1)
+        Parameters
+        ----------
+        monomer_conc : float
+            monomer concentration as molefrac
+
+        Returns
+        -------
+        float
+        """
         X_acc = sum(
             map(
-                lambda x: (x[0] + 1) * x[1],
-                enumerate(self.get_aggregate_distribution(monomer_conc)),
+                lambda x: x[0] * x[1],
+                zip(self.sizes, self.get_aggregate_distribution(monomer_conc)),
             )
         )
         return X_acc
 
     def get_aggregate_distribution(self, monomer_conc=None):
+        """
+        Get the aggregate distribution over all aggregate sizes (see
+        get_aggregate_concentration)
+
+        Parameters
+        ----------
+        monomer_conc : float, optional
+            monomer concentration in molefrac, by default None
+
+        Returns
+        -------
+        [type]
+            [description]
+        """
         if monomer_conc is None:
             monomer_conc = self.get_monomer_concentration()
         self.aggregate_distribution = np.zeros(self.free_energy_minimas.shape)
-        for i, mu_min in enumerate(self.free_energy_minimas):
-            g = i + 1
+        for i, (g, mu_min) in enumerate(zip(self.sizes, self.free_energy_minimas)):
             this_value = self.get_aggregate_concentration(g, monomer_conc, mu_min)
             self.aggregate_distribution[i] = this_value
         return self.aggregate_distribution
 
     def get_aggregate_concentration(self, g, monomer_conc=None, mu_min=None):
-        if monomer_conc is None:
+        """
+        Get the concentration in molefracs of an aggregate with aggregation 
+        number g.
+
+        X_g = exp(g * (1 + ln(X_1) - d_mu(g)) - 1)
+
+        Do sanity check if d_mu(g) is inbetween pre-calculated lower/upper
+        bounds for non-integer values. d_mu(g) > 0 leads to d_mu(g) == 0.
+        Parameters
+        ----------
+        g : float
+            aggregation number
+        monomer_conc : float, optional
+            monomer concentration in molefrac, iterated if not given, by default None
+        mu_min : float, optional
+            chemical potential difference of surfactatn in micelle vs. 
+            in solution for most favourable aggregation type. 
+            Calculated if not given, by default None
+
+        Returns
+        -------
+        float
+        """
+        if monomer_conc is None and self.monomer_concentration is None:
+            monomer_conc = self.monomer_concentration()
+        elif monomer_conc is None:
             monomer_conc = self.monomer_concentration
+
         if mu_min is None and g > 1:
             mu_min_direct = min(self.get_chempots(g))
             # Check against linear interpolation in case there is an initial
@@ -238,6 +331,12 @@ class MTSystem(object):
         elif mu_min is None and g <= 1:
             mu_min = 0.0
 
+        if mu_min == 0:
+            mu_min = 0
+        # If we use this we get *severe* numerical problems
+        # this_value = np.power(monomer_conc, g) * np.exp(g * (1.0 - mu_min) - 1.0)
         this_value = np.exp(g * (1.0 + np.log(monomer_conc) - mu_min) - 1.0)
+        # This is the Nagarajan formula - I like better
+        # this_value = np.exp(g * (np.log(monomer_conc) - mu_min))
         return this_value
 
