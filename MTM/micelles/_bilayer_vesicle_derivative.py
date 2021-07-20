@@ -347,7 +347,13 @@ class BilayerVesicleDerivative(object):
                 self.base_micelle.thickness_outer,
             )
         # Boundaries
-        if x[0] < 0 or x[1] < 0 or x[0] > 10 or x[1] > 10:
+        if (
+            x[0] < 0
+            or x[1] < 0
+            or x[0] > 10
+            or x[1] > 5
+            or not self.base_micelle._check_geometry()
+        ):
             # Return a higher value to give a negative gradient.
             sign_r_out = np.sign(self.derivative_wrt_r_out)
             sign_t_out = np.sign(self.derivative_wrt_t_out)
@@ -365,13 +371,13 @@ class BilayerVesicleDerivative(object):
                 [self.derivative_wrt_r_out, self.derivative_wrt_t_out + sign_t_out]
             )
 
-        # rsph
+        # r out
         rad_steric = self.deriv_steric_vdw_wrt_r_out()
         rad_deform = self.deriv_deformation_nagarajan_wrt_r_out()
         rad_interface = self.deriv_interface_free_energy_wrt_r_out()
         self.derivative_wrt_r_out = rad_steric + rad_interface + rad_deform
 
-        # rcyl
+        # t out
         thi_steric = self.deriv_steric_vdw_wrt_t_out()
         thi_deform = self.deriv_deformation_nagarajan_wrt_t_out()
         thi_interface = self.deriv_interface_free_energy_wrt_t_out()
