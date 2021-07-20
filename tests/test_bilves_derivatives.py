@@ -87,7 +87,7 @@ class TestRodlikeMicelleDerivativeAbsoluteDifferences:
 
     def test_t_in_wrt_r_out(self):
         self.setup()
-        ana_deriv = self.d_mic.deriv_thickness_inner_wrt_r_out
+        ana_deriv = self.d_mic.deriv_thickness_in_wrt_r_out
 
         num_deriv = absolute_difference(self.mic, update_r, lambda x: x.thickness_inner)
 
@@ -95,8 +95,48 @@ class TestRodlikeMicelleDerivativeAbsoluteDifferences:
 
     def test_t_in_wrt_t_out(self):
         self.setup()
-        ana_deriv = self.d_mic.deriv_thickness_inner_wrt_t_out
+        ana_deriv = self.d_mic.deriv_thickness_in_wrt_t_out
 
         num_deriv = absolute_difference(self.mic, update_t, lambda x: x.thickness_inner)
 
         assert ana_deriv == pytest.approx(num_deriv, abs=1e-7)
+
+    def test_area_out_wrt_r_out(self):
+        self.setup()
+        ana_deriv = self.d_mic.deriv_area_out_wrt_r_out
+
+        num_deriv = absolute_difference(
+            self.mic, update_r, lambda x: x.area_per_surfactant_outer
+        )
+
+        assert ana_deriv == pytest.approx(num_deriv, abs=1e-7)
+
+    def test_area_out_wrt_t_out(self):
+        self.setup()
+        ana_deriv = self.d_mic.deriv_area_out_wrt_t_out
+
+        num_deriv = absolute_difference(
+            self.mic, update_t, lambda x: x.area_per_surfactant_outer
+        )
+
+        assert ana_deriv == pytest.approx(num_deriv, abs=1e-7)
+
+    def test_area_in_wrt_r_out(self):
+        self.setup()
+        ana_deriv = self.d_mic.deriv_area_in_wrt_r_out
+
+        num_deriv = absolute_difference(
+            self.mic, update_r, lambda x: x.area_per_surfactant_inner
+        )
+
+        assert ana_deriv == pytest.approx(num_deriv, abs=2e-6)
+
+    def test_area_in_wrt_t_out(self):
+        self.setup()
+        ana_deriv = self.d_mic.deriv_area_in_wrt_t_out
+
+        num_deriv = absolute_difference(
+            self.mic, update_t, lambda x: x.area_per_surfactant_inner
+        )
+
+        assert ana_deriv == pytest.approx(num_deriv, abs=1e-6)

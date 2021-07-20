@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.lib.histograms import _ravel_and_check_weights
 
 
 class BilayerVesicleDerivative(object):
@@ -60,7 +61,7 @@ class BilayerVesicleDerivative(object):
         return -1.0 * self.deriv_surfactants_number_out_wrt_t_out
 
     @property
-    def deriv_thickness_inner_wrt_r_out(self):
+    def deriv_thickness_in_wrt_r_out(self):
         volume = self.base_micelle.volume
         r_in = self.base_micelle.radius_inner
         g_in = self.base_micelle.surfactants_number_inner
@@ -81,7 +82,7 @@ class BilayerVesicleDerivative(object):
         return deriv
 
     @property
-    def deriv_thickness_inner_wrt_t_out(self):
+    def deriv_thickness_in_wrt_t_out(self):
         volume = self.base_micelle.volume
         r_in = self.base_micelle.radius_inner
         g_in = self.base_micelle.surfactants_number_inner
@@ -91,5 +92,66 @@ class BilayerVesicleDerivative(object):
         aux = factor * g_in + r_in * r_in * r_in
 
         deriv = 1.0 / 3.0 * np.power(aux, -2.0 / 3.0) * factor * d_g_in_wrt_t_out
+
+        return deriv
+
+    @property
+    def deriv_area_out_wrt_r_out(self):
+        # we follow a_o = A_o/g_o here
+        r_out = self.base_micelle.radius_outer
+        g_out = self.base_micelle.surfactants_number_outer
+        d_g_out_r_out = self.deriv_surfactants_number_out_wrt_r_out
+
+        s_1 = 8.0 * np.pi * r_out * g_out
+        s_2 = -d_g_out_r_out * 4.0 * np.pi * r_out * r_out
+        nom = s_1 + s_2
+        denom = g_out * g_out
+
+        deriv = nom / denom
+        return deriv
+
+    @property
+    def deriv_area_out_wrt_t_out(self):
+        # we follow a_o = A_o/g_o here
+        r_out = self.base_micelle.radius_outer
+        g_out = self.base_micelle.surfactants_number_outer
+        d_g_out_t_out = self.deriv_surfactants_number_out_wrt_t_out
+
+        s_2 = -d_g_out_t_out * 4.0 * np.pi * r_out * r_out
+        nom = s_2
+        denom = g_out * g_out
+
+        deriv = nom / denom
+        return deriv
+
+    @property
+    def deriv_area_in_wrt_r_out(self):
+        # we follow a_i = A_i/g_i here
+        r_in = self.base_micelle.radius_inner
+        d_r_in_r_out = self.deriv_r_in_wrt_r_out
+        g_in = self.base_micelle.surfactants_number_inner
+        d_g_in_r_out = self.deriv_surfactants_number_in_wrt_r_out
+
+        s_1 = 8.0 * d_r_in_r_out * r_in * np.pi * g_in
+        s_2 = -d_g_in_r_out * 4.0 * np.pi * r_in * r_in
+        nom = s_1 + s_2
+        denom = g_in * g_in
+
+        deriv = nom / denom
+
+        return deriv
+
+    @property
+    def deriv_area_in_wrt_t_out(self):
+        # we follow a_i = A_i/g_i here
+        r_in = self.base_micelle.radius_inner
+        g_in = self.base_micelle.surfactants_number_inner
+        d_g_in_t_out = self.deriv_surfactants_number_in_wrt_t_out
+
+        s_2 = -d_g_in_t_out * 4.0 * np.pi * r_in * r_in
+        nom = s_2
+        denom = g_in * g_in
+
+        deriv = nom / denom
 
         return deriv
