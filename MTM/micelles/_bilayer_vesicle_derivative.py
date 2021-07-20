@@ -63,25 +63,33 @@ class BilayerVesicleDerivative(object):
     def deriv_thickness_inner_wrt_r_out(self):
         volume = self.base_micelle.volume
         r_in = self.base_micelle.radius_inner
-        g_in = self.base_micelle.surfactants_number_innner
+        g_in = self.base_micelle.surfactants_number_inner
         d_g_in_wrt_r_out = self.deriv_surfactants_number_in_wrt_r_out
+        d_r_in_wrt_r_out = self.deriv_r_in_wrt_r_out
 
-        aux = 3.0 * g_in * volume / (4.0 * np.pi) + r_in * r_in * r_in
-        s_1 = 3.0 * aux * aux * (d_g_in_wrt_r_out + 2. * r _in * r_in)
-        s_2 = -1. * d_g_in_wrt_r_out
+        factor = 3.0 * volume / (4.0 * np.pi)
+        aux = factor * g_in + r_in * r_in * r_in
+        s_1 = (
+            3.0
+            * aux
+            * aux
+            * (factor * d_g_in_wrt_r_out + 3.0 * r_in * r_in * d_r_in_wrt_r_out)
+        )
+        s_2 = -1.0 * d_r_in_wrt_r_out
 
         deriv = s_1 + s_2
         return deriv
 
+    @property
     def deriv_thickness_inner_wrt_t_out(self):
         volume = self.base_micelle.volume
         r_in = self.base_micelle.radius_inner
-        g_in = self.base_micelle.surfactants_number_innner
+        g_in = self.base_micelle.surfactants_number_inner
         d_g_in_wrt_t_out = self.deriv_surfactants_number_in_wrt_t_out
 
-        aux = 3.0 * g_in * volume / (4.0 * np.pi) + r_in * r_in * r_in
-        s_1 = 3.0 * aux * aux * (d_g_in_wrt_r_out + 2. * r _in * r_in)
-        s_2 = -1. * d_g_in_wrt_t_out
+        factor = 3.0 * volume / (4.0 * np.pi)
+        aux = factor * g_in + r_in * r_in * r_in
 
-        deriv = s_1 + s_2
+        deriv = 3.0 * aux * aux * factor * d_g_in_wrt_t_out
+
         return deriv
