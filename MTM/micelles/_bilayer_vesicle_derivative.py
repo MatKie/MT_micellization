@@ -10,8 +10,8 @@ class BilayerVesicleDerivative(object):
         if t_out is not None:
             self.base_micelle._t_out = t_out
 
-        self.deriv_wrt_r_out = None
-        self.deriv_wrt_t_out = None
+        self.derivative_wrt_r_out = None
+        self.derivative_wrt_t_out = None
 
     @property
     def deriv_r_in_wrt_r_out(self):
@@ -155,3 +155,227 @@ class BilayerVesicleDerivative(object):
         deriv = nom / denom
 
         return deriv
+
+    @property
+    def deriv_area_per_surfactant_wrt_r_out(self):
+        a_in = self.base_micelle.area_per_surfactant_inner
+        a_out = self.base_micelle.area_per_surfactant_outer
+        g_in = self.base_micelle.surfactants_number_inner
+        g_out = self.base_micelle.surfactants_number_outer
+
+        d_a_in_r_out = self.deriv_area_in_wrt_r_out
+        d_a_out_r_out = self.deriv_area_out_wrt_r_out
+        d_g_in_r_out = self.deriv_surfactants_number_in_wrt_r_out
+        d_g_out_r_out = self.deriv_surfactants_number_out_wrt_r_out
+
+        s_1 = a_in * d_g_in_r_out + g_in * d_a_in_r_out
+        s_2 = a_out * d_g_out_r_out + g_out * d_a_out_r_out
+
+        deriv = (s_1 + s_2) / (g_in + g_out)
+
+        return deriv
+
+    @property
+    def deriv_area_per_surfactant_wrt_t_out(self):
+        a_in = self.base_micelle.area_per_surfactant_inner
+        a_out = self.base_micelle.area_per_surfactant_outer
+        g_in = self.base_micelle.surfactants_number_inner
+        g_out = self.base_micelle.surfactants_number_outer
+
+        d_a_in_t_out = self.deriv_area_in_wrt_t_out
+        d_a_out_t_out = self.deriv_area_out_wrt_t_out
+        d_g_in_t_out = self.deriv_surfactants_number_in_wrt_t_out
+        d_g_out_t_out = self.deriv_surfactants_number_out_wrt_t_out
+
+        s_1 = a_in * d_g_in_t_out + g_in * d_a_in_t_out
+        s_2 = a_out * d_g_out_t_out + g_out * d_a_out_t_out
+
+        deriv = (s_1 + s_2) / (g_in + g_out)
+
+        return deriv
+
+    def deriv_deformation_nagarajan_out_wrt_r_out(self):
+        return 0
+
+    def deriv_deformation_nagarajan_out_wrt_t_out(self):
+        segment_length = self.base_micelle.segment_length
+        length = self.base_micelle.length
+        t_out = self.base_micelle.thickness_outer
+
+        factor = 10.0 * np.pi * np.pi / (320.0 * segment_length * length)
+        deriv = factor * 2.0 * t_out
+
+        return deriv
+
+    def deriv_deformation_nagarajan_in_wrt_r_out(self):
+        segment_length = self.base_micelle.segment_length
+        length = self.base_micelle.length
+        t_in = self.base_micelle.thickness_inner
+        d_t_in_r_out = self.deriv_thickness_in_wrt_r_out
+
+        factor = 10.0 * np.pi * np.pi / (160.0 * segment_length * length)
+        deriv = factor * 2.0 * t_in * d_t_in_r_out
+
+        return deriv
+
+    def deriv_deformation_nagarajan_in_wrt_t_out(self):
+        segment_length = self.base_micelle.segment_length
+        length = self.base_micelle.length
+        t_in = self.base_micelle.thickness_inner
+        d_t_in_t_out = self.deriv_thickness_in_wrt_t_out
+
+        factor = 10.0 * np.pi * np.pi / (160.0 * segment_length * length)
+        deriv = factor * 2.0 * t_in * d_t_in_t_out
+
+        return deriv
+
+    def deriv_deformation_nagarajan_wrt_r_out(self):
+        g_in = self.base_micelle.surfactants_number_inner
+        g_out = self.base_micelle.surfactants_number_outer
+        d_g_in_r_out = self.deriv_surfactants_number_in_wrt_r_out
+        d_g_out_r_out = self.deriv_surfactants_number_out_wrt_r_out
+        deform_out = self.base_micelle._deformation_nagarajan_out()
+        deform_in = self.base_micelle._deformation_nagarajan_in()
+        d_def_out_r_out = self.deriv_deformation_nagarajan_out_wrt_r_out()
+        d_def_in_r_out = self.deriv_deformation_nagarajan_in_wrt_r_out()
+
+        outer = g_out * d_def_out_r_out + d_g_out_r_out * deform_out
+        inner = g_in * d_def_in_r_out + d_g_in_r_out * deform_in
+
+        deriv = (outer + inner) / (g_in + g_out)
+        return deriv
+
+    def deriv_deformation_nagarajan_wrt_t_out(self):
+        g_in = self.base_micelle.surfactants_number_inner
+        g_out = self.base_micelle.surfactants_number_outer
+        d_g_in_t_out = self.deriv_surfactants_number_in_wrt_t_out
+        d_g_out_t_out = self.deriv_surfactants_number_out_wrt_t_out
+        deform_out = self.base_micelle._deformation_nagarajan_out()
+        deform_in = self.base_micelle._deformation_nagarajan_in()
+        d_def_out_t_out = self.deriv_deformation_nagarajan_out_wrt_t_out()
+        d_def_in_t_out = self.deriv_deformation_nagarajan_in_wrt_t_out()
+
+        outer = g_out * d_def_out_t_out + d_g_out_t_out * deform_out
+        inner = g_in * d_def_in_t_out + d_g_in_t_out * deform_in
+
+        deriv = (outer + inner) / (g_in + g_out)
+        return deriv
+
+    def deriv_interface_free_energy_wrt_r_out(self):
+        sigma = self.base_micelle._sigma_agg()
+        d_area_drs = self.deriv_area_per_surfactant_wrt_r_out
+
+        return sigma * d_area_drs
+
+    def deriv_interface_free_energy_wrt_t_out(self):
+        sigma = self.base_micelle._sigma_agg()
+        d_area_drs = self.deriv_area_per_surfactant_wrt_t_out
+
+        return sigma * d_area_drs
+
+    def deriv_steric_vdw_wrt_r_out(self):
+        a_head = self.base_micelle.headgroup_area
+        g_out = self.base_micelle.surfactants_number_outer
+        g_in = self.base_micelle.surfactants_number_inner
+        a_out = self.base_micelle.area_per_surfactant_outer
+        a_in = self.base_micelle.area_per_surfactant_inner
+        g_all = g_in + g_out
+
+        d_g_out_r_out = self.deriv_surfactants_number_out_wrt_r_out
+        d_g_in_r_out = self.deriv_surfactants_number_in_wrt_r_out
+        d_a_out_r_out = self.deriv_area_out_wrt_r_out
+        d_a_in_r_out = self.deriv_area_in_wrt_r_out
+
+        s_11 = d_g_out_r_out * np.log(1.0 - a_head / a_out)
+        s_12 = g_out / (1.0 - a_head / a_out) * d_a_out_r_out * a_head / (a_out * a_out)
+        s_21 = d_g_in_r_out * np.log(1.0 - a_head / a_in)
+        s_22 = g_in / (1.0 - a_head / a_in) * d_a_in_r_out * a_head / (a_in * a_in)
+
+        deriv = -(s_11 + s_12 + s_21 + s_22) / g_all
+
+        return deriv
+
+    def deriv_steric_vdw_wrt_t_out(self):
+        a_head = self.base_micelle.headgroup_area
+        g_out = self.base_micelle.surfactants_number_outer
+        g_in = self.base_micelle.surfactants_number_inner
+        a_out = self.base_micelle.area_per_surfactant_outer
+        a_in = self.base_micelle.area_per_surfactant_inner
+        g_all = g_in + g_out
+
+        d_g_out_t_out = self.deriv_surfactants_number_out_wrt_t_out
+        d_g_in_t_out = self.deriv_surfactants_number_in_wrt_t_out
+        d_a_out_t_out = self.deriv_area_out_wrt_t_out
+        d_a_in_t_out = self.deriv_area_in_wrt_t_out
+
+        s_11 = d_g_out_t_out * np.log(1.0 - a_head / a_out)
+        s_12 = g_out / (1.0 - a_head / a_out) * d_a_out_t_out * a_head / (a_out * a_out)
+        s_21 = d_g_in_t_out * np.log(1.0 - a_head / a_in)
+        s_22 = g_in / (1.0 - a_head / a_in) * d_a_in_t_out * a_head / (a_in * a_in)
+
+        deriv = -(s_11 + s_12 + s_21 + s_22) / g_all
+
+        return deriv
+
+    def jacobian(self, x=None):
+        """
+        Return the derivative of the chemical potential difference of
+        a bilayer vesicle micelle with respect to the outer radius and outer
+        thickness
+
+        If the values are negative in either direction return a value
+        giving an opposite search direction. I.e. returning a more negative
+        or more positive value.
+
+        Parameters
+        ----------
+        x : array like of length 2, optional
+            Values at which to evaluate the derivatives.
+            If None, take the current values of the micelle radii, by default None
+
+        Returns
+        -------
+        numpy array, shape (2,)
+            Derivatives wrt outer radius and outer thickness respectively.
+        """
+        if x is not None:
+            self.base_micelle._r_out, self.base_micelle._t_out = x[0], x[1]
+        else:
+            x = np.zeros((2,))
+            x[0], x[1] = (
+                self.base_micelle.radius_outer,
+                self.base_micelle.thickness_outer,
+            )
+        # Boundaries
+        if x[0] < 0 or x[1] < 0 or x[0] > 10 or x[1] > 10:
+            # Return a higher value to give a negative gradient.
+            sign_r_out = np.sign(self.derivative_wrt_r_out)
+            sign_t_out = np.sign(self.derivative_wrt_t_out)
+            return np.asarray(
+                [
+                    self.derivative_wrt_r_out + sign_r_out,
+                    self.derivative_wrt_t_out + sign_t_out,
+                ]
+            )
+        if x[0] < x[1]:
+            # If thickness is higher than radius return a higher value to
+            # get away from those solution.
+            sign_t_out = np.sign(self.derivative_wrt_t_out)
+            return np.asarray(
+                [self.derivative_wrt_r_out, self.derivative_wrt_t_out + sign_t_out]
+            )
+
+        # rsph
+        rad_steric = self.deriv_steric_vdw_wrt_r_out()
+        rad_deform = self.deriv_deformation_nagarajan_wrt_r_out()
+        rad_interface = self.deriv_interface_free_energy_wrt_r_out()
+        self.derivative_wrt_r_out = rad_steric + rad_interface + rad_deform
+
+        # rcyl
+        thi_steric = self.deriv_steric_vdw_wrt_t_out()
+        thi_deform = self.deriv_deformation_nagarajan_wrt_t_out()
+        thi_interface = self.deriv_interface_free_energy_wrt_t_out()
+
+        self.derivative_wrt_t_out = thi_steric + thi_interface + thi_deform
+
+        return np.asarray([self.derivative_wrt_r_out, self.derivative_wrt_t_out])

@@ -140,3 +140,141 @@ class TestRodlikeMicelleDerivativeAbsoluteDifferences:
         )
 
         assert ana_deriv == pytest.approx(num_deriv, abs=1e-6)
+
+    def test_deformation_out_wrt_r_out(self):
+        self.setup()
+        ana_deriv = self.d_mic.deriv_deformation_nagarajan_out_wrt_r_out()
+
+        num_deriv = absolute_difference(
+            self.mic, update_r, lambda x: x._deformation_nagarajan_out()
+        )
+
+        assert ana_deriv == pytest.approx(num_deriv, abs=1e-7)
+
+    def test_deformation_out_wrt_t_out(self):
+        self.setup()
+        ana_deriv = self.d_mic.deriv_deformation_nagarajan_out_wrt_t_out()
+
+        num_deriv = absolute_difference(
+            self.mic, update_t, lambda x: x._deformation_nagarajan_out()
+        )
+
+        assert ana_deriv == pytest.approx(num_deriv, abs=1e-7)
+
+    def test_deformation_out_wrt_r_out(self):
+        self.setup()
+        ana_deriv = self.d_mic.deriv_deformation_nagarajan_in_wrt_r_out()
+
+        num_deriv = absolute_difference(
+            self.mic, update_r, lambda x: x._deformation_nagarajan_in()
+        )
+
+        assert ana_deriv == pytest.approx(num_deriv, abs=5e-6)
+
+    def test_deformation_out_wrt_t_out(self):
+        self.setup()
+        ana_deriv = self.d_mic.deriv_deformation_nagarajan_in_wrt_t_out()
+
+        num_deriv = absolute_difference(
+            self.mic, update_t, lambda x: x._deformation_nagarajan_in()
+        )
+
+        assert ana_deriv == pytest.approx(num_deriv, abs=1e-7)
+
+    def test_deformation_wrt_r_out(self):
+        self.setup()
+        ana_deriv = self.d_mic.deriv_deformation_nagarajan_wrt_r_out()
+
+        num_deriv = absolute_difference(
+            self.mic, update_r, lambda x: x._deformation_nagarajan()
+        )
+
+        assert ana_deriv == pytest.approx(num_deriv, abs=1e-6)
+
+    def test_deformation_wrt_t_out(self):
+        self.setup()
+        ana_deriv = self.d_mic.deriv_deformation_nagarajan_wrt_t_out()
+
+        num_deriv = absolute_difference(
+            self.mic, update_t, lambda x: x._deformation_nagarajan()
+        )
+
+        assert ana_deriv == pytest.approx(num_deriv, abs=1e-7)
+
+    def test_area_wrt_r_out(self):
+        self.setup()
+        ana_deriv = self.d_mic.deriv_area_per_surfactant_wrt_r_out
+
+        num_deriv = absolute_difference(
+            self.mic, update_r, lambda x: x.area_per_surfactant
+        )
+
+        assert ana_deriv == pytest.approx(num_deriv, abs=1e-6)
+
+    def test_area_wrt_r_out(self):
+        self.setup()
+        ana_deriv = self.d_mic.deriv_area_per_surfactant_wrt_t_out
+
+        num_deriv = absolute_difference(
+            self.mic, update_t, lambda x: x.area_per_surfactant
+        )
+
+        assert ana_deriv == pytest.approx(num_deriv, abs=1e-6)
+
+    def test_interface_wrt_r_out(self):
+        self.setup()
+        ana_deriv = self.d_mic.deriv_interface_free_energy_wrt_r_out()
+
+        num_deriv = absolute_difference(
+            self.mic, update_r, lambda x: x.get_interface_free_energy()
+        )
+
+        assert ana_deriv == pytest.approx(num_deriv, abs=2e-6)
+
+    def test_interface_wrt_t_out(self):
+        self.setup()
+        ana_deriv = self.d_mic.deriv_interface_free_energy_wrt_t_out()
+
+        num_deriv = absolute_difference(
+            self.mic, update_t, lambda x: x.get_interface_free_energy()
+        )
+
+        assert ana_deriv == pytest.approx(num_deriv, abs=1e-6)
+
+    def test_steric_wrt_r_out(self):
+        self.setup()
+        ana_deriv = self.d_mic.deriv_steric_vdw_wrt_r_out()
+
+        num_deriv = absolute_difference(
+            self.mic, update_r, lambda x: x.get_steric_free_energy()
+        )
+
+        assert ana_deriv == pytest.approx(num_deriv, abs=1e-5)
+
+    def test_steric_wrt_t_out(self):
+        self.setup()
+        ana_deriv = self.d_mic.deriv_steric_vdw_wrt_t_out()
+
+        num_deriv = absolute_difference(
+            self.mic, update_t, lambda x: x.get_steric_free_energy()
+        )
+
+        assert ana_deriv == pytest.approx(num_deriv, abs=1e-6)
+
+    def test_jacobian(self):
+        self.setup()
+        self.mic._r_out += 0.05
+        self.mic._t_out -= 0.01
+        ana_rad, ana_thi = self.d_mic.jacobian()
+
+        num_rad = absolute_difference(
+            self.mic, update_r, lambda x: x.get_delta_chempot()
+        )
+        self.mic._r_out -= 1e-8
+
+        num_thi = absolute_difference(
+            self.mic, update_t, lambda x: x.get_delta_chempot()
+        )
+
+        assert ana_thi == pytest.approx(num_thi, abs=1e-6)
+        assert ana_rad == pytest.approx(num_rad, abs=1e-6)
