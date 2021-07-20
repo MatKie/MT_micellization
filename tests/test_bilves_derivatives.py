@@ -91,7 +91,7 @@ class TestRodlikeMicelleDerivativeAbsoluteDifferences:
 
         num_deriv = absolute_difference(self.mic, update_r, lambda x: x.thickness_inner)
 
-        assert ana_deriv == pytest.approx(num_deriv, abs=1e-7)
+        assert ana_deriv == pytest.approx(num_deriv, abs=1e-6)
 
     def test_t_in_wrt_t_out(self):
         self.setup()

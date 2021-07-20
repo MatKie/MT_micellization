@@ -70,9 +70,9 @@ class BilayerVesicleDerivative(object):
         factor = 3.0 * volume / (4.0 * np.pi)
         aux = factor * g_in + r_in * r_in * r_in
         s_1 = (
-            3.0
-            * aux
-            * aux
+            1.0
+            / 3.0
+            * np.power(aux, -2.0 / 3.0)
             * (factor * d_g_in_wrt_r_out + 3.0 * r_in * r_in * d_r_in_wrt_r_out)
         )
         s_2 = -1.0 * d_r_in_wrt_r_out
@@ -90,6 +90,6 @@ class BilayerVesicleDerivative(object):
         factor = 3.0 * volume / (4.0 * np.pi)
         aux = factor * g_in + r_in * r_in * r_in
 
-        deriv = 3.0 * aux * aux * factor * d_g_in_wrt_t_out
+        deriv = 1.0 / 3.0 * np.power(aux, -2.0 / 3.0) * factor * d_g_in_wrt_t_out
 
         return deriv
