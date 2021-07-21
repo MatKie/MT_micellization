@@ -46,14 +46,10 @@ class BilayerVesicle(BaseMicelle):
         ----------
         method : str, optional
             'objective' for finding the radii via
-<<<<<<< HEAD
             an optimisation of the objective function and "derivative"
             for finding the roots of the derivatives of the objective
             function, by default "objective"
 
-=======
-            an optimisation of the objective function, by default "objective"
->>>>>>> Add geometry_check property, calculate free energy minima
         hot_start : bool, optional
             Use current values of outer radius and outer thickness.
             If false estimate from assumption of equal number of surfactans
@@ -63,10 +59,6 @@ class BilayerVesicle(BaseMicelle):
         ------
         RuntimeError
             if optimisation is not totally successful
-<<<<<<< HEAD
-
-=======
->>>>>>> Add geometry_check property, calculate free energy minima
             (if self.throw_error=False it's a warning)
         NotImplementedError
             if a method was chosen which is not implemented
@@ -88,7 +80,6 @@ class BilayerVesicle(BaseMicelle):
                 method="hybr",
                 options={"factor": 0.05},
             )
-
 
         else:
             raise NotImplementedError("Method '{:s}' is not implemented".format(method))
@@ -123,10 +114,6 @@ class BilayerVesicle(BaseMicelle):
 
         Outer radius and thickness are set so that half of the surfactant
         is in the outer/inner layer and the inside surface area per surfactant
-<<<<<<< HEAD
-
-=======
->>>>>>> Add geometry_check property, calculate free energy minima
         is 10% higher than the headgroup area.
 
         Returns
@@ -135,7 +122,7 @@ class BilayerVesicle(BaseMicelle):
             list of two floats, the outer radius and outer thickness.
         """
         number_surfactants = self.surfactants_number
-        x_out = 0.4
+        x_out = 0.5
         x_in = 1.0 - x_out
         alkane_volume = number_surfactants * self.volume
         min_area_inner = 1.1 * self.headgroup_area * number_surfactants * x_in

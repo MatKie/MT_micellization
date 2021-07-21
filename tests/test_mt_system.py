@@ -24,9 +24,11 @@ class TestGetFreeEnergyMinimas:
         fig, ax = create_fig(1, 1)
         ax = ax[0]
         calc_values = np.zeros(pub_values.shape)
+        hot_start = False
         for i, g in enumerate(pub_values[:, 0]):
             calc_values[i, 0] = g
-            calc_values[i, 1] = min(MTS.get_chempots(g))
+            calc_values[i, 1] = min(MTS.get_chempots(g, hot_start=hot_start))
+            hot_start = True
 
         ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
         ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc", ls="", marker="o")
