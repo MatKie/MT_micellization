@@ -49,6 +49,7 @@ class BilayerVesicle(BaseMicelle):
             an optimisation of the objective function and "derivative"
             for finding the roots of the derivatives of the objective
             function, by default "objective"
+
         hot_start : bool, optional
             Use current values of outer radius and outer thickness.
             If false estimate from assumption of equal number of surfactans
@@ -58,6 +59,7 @@ class BilayerVesicle(BaseMicelle):
         ------
         RuntimeError
             if optimisation is not totally successful
+
             (if self.throw_error=False it's a warning)
         NotImplementedError
             if a method was chosen which is not implemented
@@ -79,6 +81,7 @@ class BilayerVesicle(BaseMicelle):
                 method="hybr",
                 options={"factor": 0.05},
             )
+
 
         else:
             raise NotImplementedError("Method '{:s}' is not implemented".format(method))
@@ -113,6 +116,7 @@ class BilayerVesicle(BaseMicelle):
 
         Outer radius and thickness are set so that half of the surfactant
         is in the outer/inner layer and the inside surface area per surfactant
+
         is 10% higher than the headgroup area.
 
         Returns
