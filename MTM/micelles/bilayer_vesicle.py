@@ -1,7 +1,8 @@
 from .base_micelle import BaseMicelle
 import numpy as np
 import warnings
-from scipy.optimize import minimize
+from scipy.optimize import minimize, root
+from ._bilayer_vesicle_derivative import BilayerVesicleDerivative
 
 
 class BilayerVesicle(BaseMicelle):
@@ -44,8 +45,11 @@ class BilayerVesicle(BaseMicelle):
         Parameters
         ----------
         method : str, optional
-            'objective' for finding the radii via 
-            an optimisation of the objective function, by default "objective"
+            'objective' for finding the radii via
+            an optimisation of the objective function and "derivative"
+            for finding the roots of the derivatives of the objective
+            function, by default "objective"
+
         hot_start : bool, optional
             Use current values of outer radius and outer thickness.
             If false estimate from assumption of equal number of surfactans
@@ -54,7 +58,8 @@ class BilayerVesicle(BaseMicelle):
         Raises
         ------
         RuntimeError
-            if optimisation is not totally successful 
+            if optimisation is not totally successful
+
             (if self.throw_error=False it's a warning)
         NotImplementedError
             if a method was chosen which is not implemented
@@ -68,6 +73,16 @@ class BilayerVesicle(BaseMicelle):
             Optim = minimize(
                 self._optimiser_func, starting_values, bounds=((0, 10), (0, 10))
             )
+        elif method == "derivative":
+            Derivatives = BilayerVesicleDerivative(self)
+            Optim = root(
+                Derivatives.jacobian,
+                x0=starting_values,
+                method="hybr",
+                options={"factor": 0.05},
+            )
+
+
         else:
             raise NotImplementedError("Method '{:s}' is not implemented".format(method))
 
@@ -100,7 +115,8 @@ class BilayerVesicle(BaseMicelle):
         Starting values for optimisation.
 
         Outer radius and thickness are set so that half of the surfactant
-        is in the outer/inner layer and the inside surface area per surfactant 
+        is in the outer/inner layer and the inside surface area per surfactant
+
         is 10% higher than the headgroup area.
 
         Returns
@@ -109,12 +125,14 @@ class BilayerVesicle(BaseMicelle):
             list of two floats, the outer radius and outer thickness.
         """
         number_surfactants = self.surfactants_number
+        x_out = 0.4
+        x_in = 1.0 - x_out
         alkane_volume = number_surfactants * self.volume
-        min_area_inner = 1.1 * self.headgroup_area * number_surfactants / 2.0
+        min_area_inner = 1.1 * self.headgroup_area * number_surfactants * x_in
         r_inner = np.sqrt(min_area_inner / 4.0 / np.pi)
         r_outer = np.cbrt(alkane_volume / (4.0 / 3.0 * np.pi) + r_inner ** 3)
 
-        r_middle = np.cbrt(r_outer ** 3 - alkane_volume / 2.0 / (4.0 / 3.0 * np.pi))
+        r_middle = np.cbrt(r_outer ** 3 - alkane_volume * x_out / (4.0 / 3.0 * np.pi))
         t_outer = r_outer - r_middle
 
         return [r_outer, t_outer]

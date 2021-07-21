@@ -673,3 +673,14 @@ class TestBilayerVesicleInterface:
         mean = calc_mean_of_deviation(calc_values[:, 1], pub_values[:, 1])
 
         assert mean < 0.005
+
+    def test_deriv_vs_optim(self):
+        #  works from 20 to 155 only (w.o. hotstart)
+        for g in range(20, 155):
+            mic_1 = micelle.BilayerVesicle(g, 298.15, 8, throw_errors=False)
+            mic_2 = micelle.BilayerVesicle(g, 298.15, 8, throw_errors=False)
+            mic_1.optimise_radii(method="derivative")
+            mic_2.optimise_radii(method="objective")
+
+            assert mic_1.radius_outer == pytest.approx(mic_2.radius_outer)
+            assert mic_2.radius_outer == pytest.approx(mic_2.radius_outer)
