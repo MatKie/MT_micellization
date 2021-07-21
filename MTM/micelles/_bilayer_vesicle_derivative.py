@@ -352,7 +352,7 @@ class BilayerVesicleDerivative(object):
             or x[1] < 0
             or x[0] > 10
             or x[1] > 5
-            or not self.base_micelle._check_geometry()
+            or not self.base_micelle.geometry_check
         ):
             # Return a higher value to give a negative gradient.
             sign_r_out = np.sign(self.derivative_wrt_r_out)

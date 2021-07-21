@@ -128,7 +128,7 @@ class MTSystem(object):
         list of MTM.micelle micelles objects
             only the ones which were set to True
         """
-        # g_0 effectively will not be used.
+        # g_0 effectively will not be used. Except when hot starting!
         g_0 = 30
         # Get all the keys we put 'true' for and have a class in types in
         wanted_types = {
@@ -146,7 +146,7 @@ class MTSystem(object):
         self.micelles = micelles
         return self.micelles
 
-    def get_chempots(self, size):
+    def get_chempots(self, size, hot_start=False):
         """
         Get all micelle chempot differences for a given size.
 
@@ -160,7 +160,7 @@ class MTSystem(object):
         for i, micelle in enumerate(self.micelles):
             micelle.surfactants_number = size
             if hasattr(micelle, "optimise_radii"):
-                micelle.optimise_radii(hot_start=False)
+                micelle.optimise_radii(hot_start=hot_start)
             if micelle.geometry_check or micelle.geometry_check is None:
                 chempots[i] = micelle.get_delta_chempot()
             else:
