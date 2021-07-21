@@ -37,7 +37,7 @@ class BilayerVesicle(BaseMicelle):
         instance.optimise_radii()
         return instance
 
-    def optimise_radii(self, method="derivative", hot_start=False):
+    def optimise_radii(self, method="objective", hot_start=False):
         """
         Optimise outer radius and outer thickness of the vesicle to give
         lowest chemical potential.
