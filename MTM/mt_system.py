@@ -167,26 +167,10 @@ class MTSystem(object):
                 chempots[i] = 101
         return chempots
 
-    def hacky_hack(self, g):
-        from MTM import literature
-
-        pub = literature.LiteratureData().overall_minima_C8_298
-
-        if g < 27:
-            return 100
-
-        data = pub[np.where(pub[:, 0] > 27)]
-        z = np.polyfit(data[:, 0], data[:, 1], 8)
-        p = np.poly1d(z)
-
-        if g > 200:
-            return p(200)
-        return p(g)
-
     def get_monomer_concentration(self, surfactant_concentration=None, *args):
         """
         Iterates the monomer concentration until the mass balance is satisfied.
-        Since X_g is given as a function of monomer concentration and 
+        Since X_g is given as a function of monomer concentration and
         difference in chemical potential alone, where the latter is given
         independently, this is the following problem of roof finding:
 
@@ -306,7 +290,7 @@ class MTSystem(object):
 
     def get_aggregate_concentration(self, g, monomer_conc=None, mu_min=None):
         """
-        Get the concentration in molefracs of an aggregate with aggregation 
+        Get the concentration in molefracs of an aggregate with aggregation
         number g.
 
         X_g = exp(g * (1 + ln(X_1) - d_mu(g)) - 1)
@@ -320,8 +304,8 @@ class MTSystem(object):
         monomer_conc : float, optional
             monomer concentration in molefrac, iterated if not given, by default None
         mu_min : float, optional
-            chemical potential difference of surfactatn in micelle vs. 
-            in solution for most favourable aggregation type. 
+            chemical potential difference of surfactatn in micelle vs.
+            in solution for most favourable aggregation type.
             Calculated if not given, by default None
 
         Returns
@@ -355,4 +339,3 @@ class MTSystem(object):
         # This is the Nagarajan formula - I like better
         # this_value = np.exp(g * (np.log(monomer_conc) - mu_min))
         return this_value
-
