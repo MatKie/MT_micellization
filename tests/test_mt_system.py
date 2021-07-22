@@ -28,11 +28,13 @@ class TestGetFreeEnergyMinimas:
         for i, g in enumerate(pub_values[:, 0]):
             calc_values[i, 0] = g
             calc_values[i, 1] = min(MTS.get_chempots(g, hot_start=hot_start))
-            hot_start = True
+            hot_start = False
 
-        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
+        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub", lw=2)
         ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc", ls="", marker="o")
 
+        ax.set_xlabel("Micelle size")
+        ax.set_ylabel("$\Delta\mu^0_g / k_b T$")
         ax.legend()
 
         save_to_file(os.path.join(this_path, "regress_combined_minima"))
@@ -59,6 +61,8 @@ class TestGetFreeEnergyMinimas:
         ax.axvline(56, ls="--", color="C2", lw=2)
         ax.set_xlim(0, 75)
 
+        ax.set_xlabel("Micelle size")
+        ax.set_ylabel("$\Delta\mu^0_g / k_b T$")
         save_to_file(os.path.join(this_path, "plot_combined_minima"))
 
     def test_sph_vs_vesicle_lower(self):
@@ -168,6 +172,9 @@ class TestGetMonomerConcentration:
         ax.plot(calc[:, 0], calc[:, 1], ls="", marker="o", color=color)
 
         ax.legend()
+
+        ax.set_xlabel("Micelle size")
+        ax.set_ylabel("Molfrac / mol/mol")
         save_to_file(os.path.join(this_path, "regress_concentration_distributions"))
 
         if not flag1 or not flag2 or not flag3:
@@ -181,22 +188,24 @@ class TestGetMonomerConcentration:
         MTS = MTSystem(T=298, m=8, surfactant_concentration=0.15)
         calc, flag1, mssg1 = self.compare(pub, MTS, factor=1e5)
         color = "C0"
-        ax.plot(pub[:, 0], pub[:, 1], color=color, label="C8")
+        ax.plot(pub[:, 0], pub[:, 1], color=color, label="C8", lw=2)
         ax.plot(calc[:, 0], calc[:, 1], ls="", marker="o", color=color)
         pub = lit.Xg_C10_X_15
         MTS = MTSystem(T=298, m=10, surfactant_concentration=0.15)
         calc, flag2, mssg2 = self.compare(pub, MTS, factor=1e5)
         color = "C1"
-        ax.plot(pub[:, 0], pub[:, 1], color=color, label="C10")
+        ax.plot(pub[:, 0], pub[:, 1], color=color, label="C10", lw=2)
         ax.plot(calc[:, 0], calc[:, 1], ls="", marker="o", color=color)
         pub = lit.Xg_C12_X_15_fig6
         MTS = MTSystem(T=298, m=12, surfactant_concentration=0.15)
         calc, flag3, mssg3 = self.compare(pub, MTS, factor=1e5)
         color = "C3"
-        ax.plot(pub[:, 0], pub[:, 1], color=color, label="C12")
+        ax.plot(pub[:, 0], pub[:, 1], color=color, label="C12", lw=2)
         ax.plot(calc[:, 0], calc[:, 1], ls="", marker="o", color=color)
 
         ax.legend()
+        ax.set_xlabel("Micelle size")
+        ax.set_ylabel("Molfrac / mol/mol")
         save_to_file(os.path.join(this_path, "regress_taillength_distributions"))
 
         if not flag1 or not flag2 or not flag3:
