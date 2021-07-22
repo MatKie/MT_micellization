@@ -167,6 +167,22 @@ class MTSystem(object):
                 chempots[i] = 101
         return chempots
 
+    def hacky_hack(self, g):
+        from MTM import literature
+
+        pub = literature.LiteratureData().overall_minima_C8_298
+
+        if g < 27:
+            return 100
+
+        data = pub[np.where(pub[:, 0] > 27)]
+        z = np.polyfit(data[:, 0], data[:, 1], 8)
+        p = np.poly1d(z)
+
+        if g > 200:
+            return p(200)
+        return p(g)
+
     def get_monomer_concentration(self, surfactant_concentration=None, *args):
         """
         Iterates the monomer concentration until the mass balance is satisfied.
@@ -331,7 +347,7 @@ class MTSystem(object):
         elif mu_min is None and g <= 1:
             mu_min = 0.0
 
-        if mu_min == 0:
+        if g == 1:
             mu_min = 0
         # If we use this we get *severe* numerical problems
         # this_value = np.power(monomer_conc, g) * np.exp(g * (1.0 - mu_min) - 1.0)

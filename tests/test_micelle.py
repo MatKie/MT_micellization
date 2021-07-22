@@ -158,8 +158,11 @@ class TestSphericalMicelleInterfaceFreeEnergy:
             calc_values[i, 0] = Temp
             calc_values[i, 1] = sigma_agg
 
-        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
-        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+        ax.plot(pub_values[:, 0], pub_values[:, 1], lw=2, label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], lw=2, ls="--", label="calc")
+
+        ax.set_ylabel("$\Delta\mu_g^0 / k_b T$")
+        ax.set_xlabel("Micelle Size")
 
         ax.legend()
 
@@ -185,11 +188,13 @@ class TestSphericalMicelleInterfaceFreeEnergy:
             calc_values[i, 0] = g
             calc_values[i, 1] = mic.get_interface_free_energy()
 
-        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
-        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+        ax.plot(pub_values[:, 0], pub_values[:, 1], lw=2, label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], lw=2, ls="--", label="calc")
 
         ax.legend()
 
+        ax.set_ylabel("$\Delta\mu_g^0 / k_b T$")
+        ax.set_xlabel("Micelle Size")
         save_to_file(os.path.join(this_path, "regress_interface_free_energy_298"))
 
         for pub, calc in zip(pub_values[:, 1], calc_values[:, 1]):
@@ -212,9 +217,11 @@ class TestSphericalMicelleInterfaceFreeEnergy:
             calc_values[i, 0] = g
             calc_values[i, 1] = mic.get_interface_free_energy()
 
-        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
-        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+        ax.plot(pub_values[:, 0], pub_values[:, 1], lw=2, label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], lw=2, ls="--", label="calc")
 
+        ax.set_ylabel("$\Delta\mu_g^0 / k_b T$")
+        ax.set_xlabel("Micelle Size")
         ax.legend()
 
         save_to_file(os.path.join(this_path, "regress_interface_free_energy_330"))
@@ -298,9 +305,11 @@ class TestSphericalMicelleDeltaMu:
             calc_values[i, 0] = g
             calc_values[i, 1] = mic.get_delta_chempot()
 
-        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
-        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+        ax.plot(pub_values[:, 0], pub_values[:, 1], lw=2, label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], lw=2, ls="--", label="calc")
 
+        ax.set_ylabel("$\Delta\mu_g^0 / k_b T$")
+        ax.set_xlabel("Micelle Size")
         ax.legend()
 
         save_to_file(os.path.join(this_path, "regress_delta_mu"))
@@ -325,8 +334,11 @@ class TestSphericalMicelleDeltaMu:
             calc_values[i, 0] = g
             calc_values[i, 1] = mic.get_delta_chempot()
 
-        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
-        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+        ax.plot(pub_values[:, 0], pub_values[:, 1], lw=2, label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], lw=2, ls="--", label="calc")
+
+        ax.set_ylabel("$\Delta\mu_g^0 / k_b T$")
+        ax.set_xlabel("Micelle Size")
 
         ax.legend()
 
@@ -352,8 +364,11 @@ class TestSphericalMicelleDeltaMu:
             calc_values[i, 0] = g
             calc_values[i, 1] = mic.get_delta_chempot()
 
-        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
-        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+        ax.plot(pub_values[:, 0], pub_values[:, 1], lw=2, label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], lw=2, ls="--", label="calc")
+
+        ax.set_ylabel("$\Delta\mu_g^0 / k_b T$")
+        ax.set_xlabel("Micelle Size")
 
         ax.legend()
 
@@ -454,9 +469,11 @@ class TestRodlikeMicelleFullFreeEnergy:
             calc_values[i, 0] = g
             calc_values[i, 1] = mic.get_delta_chempot()
 
-        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
-        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+        ax.plot(pub_values[:, 0], pub_values[:, 1], lw=2, label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], lw=2, ls="--", label="calc")
 
+        ax.set_ylabel("$\Delta\mu_g^0 / k_b T$")
+        ax.set_xlabel("Micelle Size")
         ax.set_ylim(min(pub_values[:, 1]) - 1, max(pub_values[:, 1]) + 2)
         ax.legend()
 
@@ -597,8 +614,10 @@ class TestBilayerVesicle:
             chempot = mic.get_delta_chempot()
             calc_values[i, 1] = chempot
 
-        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
-        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+        ax.plot(pub_values[:, 0], pub_values[:, 1], lw=2, label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], lw=2, ls="--", label="calc")
+        ax.set_ylabel("$\Delta\mu_g^0 / k_b T$")
+        ax.set_xlabel("Micelle Size")
 
         ax.legend()
 
@@ -631,9 +650,10 @@ class TestBilayerVesicleInterface:
             calc_values[i, 0] = g
             calc_values[i, 1] = mic.get_interface_free_energy()
 
-        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
-        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
-
+        ax.plot(pub_values[:, 0], pub_values[:, 1], lw=2, label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1], lw=2, ls="--", label="calc")
+        ax.set_ylabel("$\Delta\mu_g^0 / k_b T$")
+        ax.set_xlabel("Micelle Size")
         ax.legend()
 
         save_to_file(
@@ -667,8 +687,10 @@ class TestBilayerVesicleInterface:
             calc_values[i, 0] = g
             calc_values[i, 1] = mic.get_interface_free_energy()
 
-        ax.plot(pub_values[:, 0], pub_values[:, 1], label="pub")
-        ax.plot(calc_values[:, 0], calc_values[:, 1], label="calc")
+        ax.plot(pub_values[:, 0], pub_values[:, 1],lw=2, label="pub")
+        ax.plot(calc_values[:, 0], calc_values[:, 1],lw=2, ls='--', label="calc")
+        ax.set_ylabel("$\Delta\mu_g^0 / k_b T$")
+        ax.set_xlabel("Micelle Size")
 
         ax.legend()
 
