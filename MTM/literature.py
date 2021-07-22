@@ -84,6 +84,9 @@ class LiteratureData(object):
         self.Xg_C12_X_15 = self.read_data(os.path.join(datapath, "Xg_C12_X_15.csv"))
         self.Xg_C12_X_05 = self.read_data(os.path.join(datapath, "Xg_C12_X_05.csv"))
         self.Xg_C12_X_005 = self.read_data(os.path.join(datapath, "Xg_C12_X_005.csv"))
+        self.num_average_C8 = self.read_data(
+            os.path.join(datapath, "number_av_fig7.csv")
+        )
 
     @staticmethod
     def read_data(path):
