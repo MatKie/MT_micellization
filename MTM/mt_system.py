@@ -35,6 +35,7 @@ class MTSystem(object):
         self.free_energy_minimas = None
         self.free_energy_types = None
         self.monomer_concentration = None
+        self.aggregate_distribution = None
         self.wanted_keys = None  # set by next function
         self.micelles = self.get_micelles(
             T, m, spheres=spheres, globular=globular, rodlike=rodlike, vesicles=vesicles
@@ -339,3 +340,18 @@ class MTSystem(object):
         # This is the Nagarajan formula - I like better
         # this_value = np.exp(g * (np.log(monomer_conc) - mu_min))
         return this_value
+
+    def get_aggregation_number(self, type="number"):
+        if self.aggregate_distribution is None:
+            _ = self.get_aggregate_distribution()
+
+        if type == "number":
+            weights = np.ones(self.sizes.shape)
+        elif type == "number":
+            weights = self.sizes
+
+        average = np.sum(weights * self.sizes * self.aggregate_distribution) / np.sum(
+            weights * self.aggregate_distribution
+        )
+
+        return average
