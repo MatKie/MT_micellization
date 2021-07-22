@@ -213,7 +213,7 @@ class BilayerVesicleDerivative(object):
         t_in = self.base_micelle.thickness_inner
         d_t_in_r_out = self.deriv_thickness_in_wrt_r_out
 
-        factor = 10.0 * np.pi * np.pi / (160.0 * segment_length * length)
+        factor = 10.0 * np.pi * np.pi / (80.0 * segment_length * length)
         deriv = factor * 2.0 * t_in * d_t_in_r_out
 
         return deriv
@@ -224,7 +224,7 @@ class BilayerVesicleDerivative(object):
         t_in = self.base_micelle.thickness_inner
         d_t_in_t_out = self.deriv_thickness_in_wrt_t_out
 
-        factor = 10.0 * np.pi * np.pi / (160.0 * segment_length * length)
+        factor = 10.0 * np.pi * np.pi / (80.0 * segment_length * length)
         deriv = factor * 2.0 * t_in * d_t_in_t_out
 
         return deriv

@@ -74,7 +74,7 @@ class LiteratureData(object):
             os.path.join(datapath, "interface_bil_ves_C8_330.csv")
         )
         self.overall_minima_C8_298 = self.read_data(
-            os.path.join(datapath, "overall_minima_C8_298.csv")
+            os.path.join(datapath, "overall_minima_C8_298_full.csv")
         )
         self.Xg_C8_X_15 = self.read_data(os.path.join(datapath, "Xg_C8_X_15.csv"))
         self.Xg_C10_X_15 = self.read_data(os.path.join(datapath, "Xg_C10_X_15.csv"))

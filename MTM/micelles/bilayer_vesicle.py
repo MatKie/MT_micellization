@@ -241,6 +241,7 @@ class BilayerVesicle(BaseMicelle):
         _volume = self.volume
         _g_in = self.surfactants_number_inner
 
+        # Yes this is a cubic root and not cubed. Error in paper.
         _ti = np.cbrt(_r_in ** 3 + (3.0 * _g_in * _volume / (4.0 * np.pi)))
         _ti -= _r_in
 
@@ -365,7 +366,7 @@ class BilayerVesicle(BaseMicelle):
         _segment_length = self.segment_length
 
         nom = 10.0 * np.pi * np.pi * _t_in * _t_in
-        denom = 160.0 * _length * _segment_length
+        denom = 80.0 * _length * _segment_length
         deform = nom / denom
 
         return deform
