@@ -194,12 +194,12 @@ class MTSystem(object):
         RuntimeError
             In case root finding was not successful
         """
-        if surfactant_concentration is None:
-            surfactant_concentration = self.surfactant_concentration
-        elif surfactant_concentration is None and self.surfactant_concentration is None:
+        if surfactant_concentration is None and self.surfactant_concentration is None:
             raise ValueError(
                 "Please supply surfactant concentration upon system creation or when calling this method"
             )
+        if surfactant_concentration is None:
+            surfactant_concentration = self.surfactant_concentration
         else:
             self.surfactant_concentration = surfactant_concentration
 
@@ -257,12 +257,18 @@ class MTSystem(object):
         Returns
         -------
         float
-        """
+        
         X_acc = sum(
             map(
                 lambda x: x[0] * x[1],
                 zip(self.sizes, self.get_aggregate_distribution(monomer_conc)),
             )
+        )
+        """
+        X_acc = np.matmul(
+            self.sizes,
+            self.get_aggregate_distribution(monomer_conc),
+            dtype=np.longfloat,
         )
         return X_acc
 
@@ -341,17 +347,22 @@ class MTSystem(object):
         # this_value = np.exp(g * (np.log(monomer_conc) - mu_min))
         return this_value
 
-    def get_aggregation_number(self, type="number"):
+    def get_aggregation_number(self, order="number"):
         if self.aggregate_distribution is None:
             _ = self.get_aggregate_distribution()
 
-        if type == "number":
-            weights = np.ones(self.sizes.shape)
-        elif type == "number":
-            weights = self.sizes
+        all_weights = {"number": np.ones(self.sizes.shape), "weight": self.sizes}
 
-        average = np.sum(weights * self.sizes * self.aggregate_distribution) / np.sum(
-            weights * self.aggregate_distribution
-        )
+        weights = all_weights.get(order, None)
+        if weights is None:
+            raise NotImplementedError(
+                f"Method {type} not supported. Choose from {all_weights.keys()}"
+            )
+
+        average = np.matmul(
+            np.multiply(weights, self.sizes),
+            self.aggregate_distribution,
+            dtype=np.longfloat,
+        ) / np.matmul(weights, self.aggregate_distribution, dtype=np.longfloat)
 
         return average

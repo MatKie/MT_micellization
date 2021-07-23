@@ -15,29 +15,44 @@ class TestAverages:
     def test_number_average(self):
         lit = literature.LiteratureData()
         pub = lit.num_average_C8
-        fig, ax = create_fig(1, 1)
+        fig, ax = create_fig(2, 1)
+        ax2 = ax[1]
         ax = ax[0]
         average = []
         monomer = []
-        monomer2 = []
-        MTS = MTSystem()
-        x = np.linspace(0.0002, 0.02, 20)
+        weightav = []
+        MTS = MTSystem(spheres=True, rodlike=False, vesicles=False)
+        MTS._bounds = (1, 150)
+        x = np.logspace(-4, 0, 20)
         for xs in x:
             # Awful hack, fix this by making these things attributes!
             MTS.aggregate_distribution = None
             MTS.monomer_concentration = None
             MTS.surfactant_concentration = xs
             average.append(MTS.get_aggregation_number())
+            weightav.append(MTS.get_aggregation_number(order="weight"))
             monomer.append(MTS.monomer_concentration)
-            monomer2.append(MTS.get_aggregate_concentration(1))
-
-        ax.plot(monomer2, average, lw=2, marker="o")
-        ax.plot(pub[:, 0], pub[:, 1], lw=2)
+            ax2.plot(MTS.sizes[1:], MTS.sizes[1:] * MTS.aggregate_distribution[1:])
+        # ax.plot(x, average, lw=2, marker="o")
+        ax.plot(pub[:, 0], pub[:, 1], lw=2, label="pub")
+        ax.plot(monomer, average, lw=2, ls="", label="calc", marker="o")
+        ax.plot(monomer, weightav, lw=2, ls="", label="calc - weight", marker="o")
         # ax.plot(x, average)
 
+        ax.legend()
+        ax.set_xlabel("$X_1 / -$")
+        ax.set_ylabel("$g_n / -$")
         save_to_file(os.path.join(this_path, "number_averages"))
 
-        assert True == True
+        for xm, gn in zip(monomer[3:], average[3:]):
+            assert gn == pytest.approx(np.interp(xm, pub[:, 0], pub[:, 1]), abs=0.2)
+
+    def test_not_implemented_error(self):
+        MTS = MTSystem(vesicles=False, rodlike=False)
+        MTS._bounds = (1, 150)
+        with pytest.raises(NotImplementedError):
+            MTS.surfactant_concentration = 0.1
+            MTS.get_aggregation_number(order="orderPLEASE")
 
 
 class TestGetFreeEnergyMinimas:
@@ -176,10 +191,8 @@ class TestGetMonomerConcentration:
                 assert calci == pytest.approx(pubi, abs=0.6)
             except AssertionError:
                 flag = False
-                mssg = (
-                    "Assertion error for system: Xs {:f}, C {:d} at size {:f}".format(
-                        MTS.surfactant_concentration, MTS.m, calc[size, 0]
-                    )
+                mssg = "Assertion error for system: Xs {:f}, C {:d} at size {:f}".format(
+                    MTS.surfactant_concentration, MTS.m, calc[size, 0]
                 )
                 return calc, flag, mssg
         return calc, True, ""
