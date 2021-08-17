@@ -2,6 +2,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 import warnings
 from scipy.optimize import minimize, LinearConstraint
+from ._transfer_saft import TransferSaft
 
 
 class BaseMicelle(object):
@@ -51,6 +52,7 @@ class BaseMicelle(object):
         self.delta_chempot = None
         # Exponent is 10^-23, account for it in conversions!
         self.boltzman = 1.38064852
+        self._transfer_saft = TransferSaft()
 
     def get_delta_chempot(
         self,
@@ -235,7 +237,10 @@ class BaseMicelle(object):
         float
             Transfer free energy in units of k_b*T.
         """
-        methods = {"empirical": self._transfer_empirical}
+        methods = {
+            "empirical": self._transfer_empirical,
+            "assoc_saft": self._transfer_assoc_saftvrmie,
+        }
         _free_energy_method = methods.get(method)
         if _free_energy_method is None:
             self._raise_not_implemented(methods)
@@ -261,6 +266,26 @@ class BaseMicelle(object):
             - 0.0056 * self.temperature
         )
         return (self.tail_carbons - 1.0) * transfer_ch2 + transfer_ch3
+
+    def _transfer_assoc_saftvrmie(self):
+        """
+        Correlation based on SAFT VR Mie model with associating water
+        model
+        """
+        self._transfer_saft.temperature = self.temperature
+        nc = self.tail_carbons
+        mu_ch2 = self._transfer_saft.mu_ch2
+        mu_alkanes = self._transfer_saft.mu_alkanes
+        if nc < 5:
+            raise ValueError("Probably not sensible to have alkane tails that small?")
+        elif nc > 4 and nc < 12:
+            mu_alkane = mu_alkanes.get(nc)
+        elif nc > 11:
+            mu_alkane = mu_alkanes.get(11) + (nc - 11) * mu_ch2
+
+        mu = 0.5 * mu_alkane + ((nc - 2.0) / 2.0 * mu_ch2)
+
+        return mu
 
     def get_interface_free_energy(self, method="empirical", curvature="flat"):
         """
