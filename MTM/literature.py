@@ -87,6 +87,13 @@ class LiteratureData(object):
         self.num_average_C8 = self.read_data(
             os.path.join(datapath, "number_av_fig7.csv")
         )
+        self.num_average_C8_transfer = self.read_data(
+            os.path.join(datapath, "number_av_fig7_transfer.csv")
+        )
+        self.mu_tr_alkanes = self.read_data(
+            os.path.join(datapath, "reinhardt_fig1.csv")
+        )
+        self.mu_tr_C8 = self.read_data(os.path.join(datapath, "reinhardt_fig2.csv"))
 
     @staticmethod
     def read_data(path):

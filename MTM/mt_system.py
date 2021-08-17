@@ -30,6 +30,7 @@ class MTSystem(object):
         globular=False,
         rodlike=True,
         vesicles=True,
+        chempot_args={},
     ):
         self.sizes = None
         self.free_energy_minimas = None
@@ -43,6 +44,7 @@ class MTSystem(object):
         self.surfactant_concentration = surfactant_concentration
         self.T = T
         self.m = m
+        self.chempot_args = chempot_args
         self._bounds = (1, 1000)
 
     def get_free_energy_minimas(self, T=None, m=None, **kwargs):
@@ -153,9 +155,11 @@ class MTSystem(object):
 
         Parameters
         ----------
-        micelles : list of micelletypes
         size : float
             micelle aggregation size.
+        hot_start : booelean
+            wether or not to use previously calculated dimensions for 
+            optimisation of dimensions for some kind of micelles.
         """
         chempots = np.zeros((len(self.micelles)))
         for i, micelle in enumerate(self.micelles):
@@ -163,7 +167,7 @@ class MTSystem(object):
             if hasattr(micelle, "optimise_radii"):
                 micelle.optimise_radii(hot_start=hot_start)
             if micelle.geometry_check or micelle.geometry_check is None:
-                chempots[i] = micelle.get_delta_chempot()
+                chempots[i] = micelle.get_delta_chempot(**self.chempot_args)
             else:
                 chempots[i] = 101
         return chempots
