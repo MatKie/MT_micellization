@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 import warnings
 from scipy.optimize import minimize, LinearConstraint
 from ._transfer_saft import TransferSaft
+from ._transfer_saft_gamma import TransferSaftGamma
 
 
 class BaseMicelle(object):
@@ -53,6 +54,7 @@ class BaseMicelle(object):
         # Exponent is 10^-23, account for it in conversions!
         self.boltzman = 1.38064852
         self._transfer_saft = TransferSaft()
+        self._transfer_saft_gamma = TransferSaftGamma(self.tail_carbons)
 
     def get_delta_chempot(
         self,
@@ -240,6 +242,7 @@ class BaseMicelle(object):
         methods = {
             "empirical": self._transfer_empirical,
             "assoc_saft": self._transfer_assoc_saftvrmie,
+            "assoc_saft_gamma": self._transfer_assoc_saftgammamie,
         }
         _free_energy_method = methods.get(method)
         if _free_energy_method is None:
@@ -285,6 +288,20 @@ class BaseMicelle(object):
 
         mu = 0.5 * mu_alkane + ((nc - 2.0) / 2.0 * mu_ch2)
 
+        return mu
+
+    def _transfer_assoc_saftgammamie(self):
+        """
+        Correlation based on Saft Gamma Mie model with associating water model
+        """
+        self._transfer_saft_gamma.temperature = self.temperature
+        mu_ch2 = self._transfer_saft_gamma.mu_ch2
+        mu_alkane = self._transfer_saft_gamma.mu_alkane
+
+        if self._transfer_saft_gamma.alkyl_ends:
+            return mu_alkane
+
+        mu = 0.5 * mu_alkane + ((self.tail_carbons - 2.0) / 2.0 * mu_ch2)
         return mu
 
     def get_interface_free_energy(self, method="empirical", curvature="flat"):
