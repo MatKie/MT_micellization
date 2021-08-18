@@ -134,14 +134,11 @@ class TestTransfer(object):
         fig, ax = create_fig(1, 1)
         ax = ax[0]
 
-        ax.plot(temps, emp, ls="-", color="k", label="empirical", lw=2)
-        ax.plot(
-            temps, saft, ls="--", color="C0", label="this work - full alkanes", lw=2
-        )
+        ax.plot(temps, saft, ls="-", color="C0", label="this work - full alkanes", lw=2)
         ax.plot(
             temps,
             saft_hydrated,
-            ls="--",
+            ls="-",
             color="C2",
             label="this work - alkyl tails + hydrated",
             lw=2,
@@ -149,12 +146,15 @@ class TestTransfer(object):
         ax.plot(
             temps,
             saft_alkyl,
-            ls="--",
+            ls="-",
             color="C3",
             label="this work - alkyl tails",
             lw=2,
         )
-        ax.plot(this_data[:, 0], this_data[:, 1], color="k", lw=2, label="Published")
+        ax.plot(temps, emp, ls="--", color="k", label="Empirical", lw=2)
+        ax.plot(
+            this_data[:, 0], this_data[:, 1], color="k", lw=2, label="Published SAFT"
+        )
 
         ax.set_ylabel(r"$\mu_g$")
         ax.legend()
