@@ -1,3 +1,4 @@
+from numpy.lib.npyio import save
 from MTM.micelles._transfer_saft import TransferSaft
 from MTM import MTSystem
 from MTM.literature import LiteratureData
@@ -84,11 +85,14 @@ class TestTransfer(object):
         fig, ax = create_fig(1, 1)
         ax = ax[0]
 
-        ax.plot(temps, emp, ls="-", color="k", label="empirical", lw=2)
-        ax.plot(temps, saft, ls="--", color="C0", label="assoc_saft", lw=2)
-        ax.plot(this_data[:, 0], this_data[:, 1], color="k", lw=2, label="Published")
+        ax.plot(temps, emp, ls="--", color="k", label="empirical", lw=2)
+        ax.plot(temps, saft, ls="-", color="C0", label="SAFT VR-MIE (assoc)", lw=2)
+        ax.plot(
+            this_data[:, 0], this_data[:, 1], color="k", lw=2, label="Published SAFT"
+        )
 
         ax.set_ylabel(r"$\mu_g$")
+        ax.legend()
         save_to_file(os.path.join(figure_path, "transfer_emp_vs_saft"))
 
 
@@ -150,4 +154,15 @@ class TestAverages:
         ax.set_xlabel("$X_1 / -$")
         ax.set_ylabel("$g_n / -$")
         save_to_file(os.path.join(figure_path, "number_averages_transfer"))
+
+        ax.plot(x, average, label="Empirical", color="k", ls="", marker="o")
+        ax.plot(x, average_2, label="Transfer Saft", color="C3", ls="", marker="o")
+        ax.set_xscale("log")
+        save_to_file(os.path.join(figure_path, "test"))
+        fig, ax = create_fig(1, 1)
+        ax = ax[0]
+
+        ax.plot(x, monomer, label="Empirical", color="k", ls="", marker="o")
+        ax.plot(x, monomer_2, label="Transfer Saft", color="C3", ls="", marker="o")
+        save_to_file(os.path.join(figure_path, "test2"))
 
