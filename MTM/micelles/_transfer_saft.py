@@ -1,4 +1,7 @@
-from SGTPy import saftvrmie, mixture, component
+try:
+    from SGTPy import saftvrmie, mixture, component
+except:
+    from sgtpy import saftvrmie, mixture, component
 import numpy as np
 
 
