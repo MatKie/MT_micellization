@@ -63,26 +63,60 @@ class BilayerVesicle(BaseMicelle):
         NotImplementedError
             if a method was chosen which is not implemented
         """
-        if not hot_start:
-            starting_values = np.asarray(self._starting_values())
-        else:
-            starting_values = np.asarray([self.radius_outer, self.thickness_outer])
+        escape_optim = False
+        last_round = False
+        hot_start_values = np.asarray([self.radius_outer, self.thickness_outer])
+        while not escape_optim:
+            if last_round:
+                escape_optim = True
+            if not hot_start:
+                starting_values = np.asarray(self._starting_values())
+            else:
+                starting_values = hot_start_values
 
-        if method == "objective":
-            Optim = minimize(
-                self._optimiser_func, starting_values, bounds=((0, 10), (0, 10))
-            )
-        elif method == "derivative":
-            Derivatives = BilayerVesicleDerivative(self)
-            Optim = root(
-                Derivatives.jacobian,
-                x0=starting_values,
-                method="hybr",
-                options={"factor": 0.05},
-            )
+            if method == "objective":
+                Optim = minimize(
+                    self._optimiser_func, starting_values, bounds=((0, 10), (0, 10))
+                )
+            elif method == "derivative":
+                Derivatives = BilayerVesicleDerivative(self)
+                Optim = root(
+                    Derivatives.jacobian,
+                    x0=starting_values,
+                    method="hybr",
+                    options={"factor": 0.05},
+                )
+            elif method == "both":
+                Optim = minimize(
+                    self._optimiser_func, starting_values, bounds=((0, 10), (0, 10))
+                )
+                self._r_out = Optim.x[0]
+                self._t_out = Optim.x[1]
+                Derivatives = BilayerVesicleDerivative(self)
+                Optim = root(
+                    Derivatives.jacobian,
+                    x0=starting_values,
+                    method="hybr",
+                    options={"factor": 0.05},
+                )
 
-        else:
-            raise NotImplementedError("Method '{:s}' is not implemented".format(method))
+            else:
+                raise NotImplementedError(
+                    "Method '{:s}' is not implemented".format(method)
+                )
+            if Optim.success and Optim.fun < 10:
+                escape_optim = True
+            else:
+                # First try 'both' method, then guess starting values
+                # and then prior hot_start values
+                if method != "both":
+                    method = "both"
+                elif method == "both" and hot_start:
+                    hot_start = False
+                    last_round = True
+                elif method == "both" and not hot_start:
+                    hot_start = True
+                    last_round = True
 
         if not Optim.success:  # and Optim.status != 8:
             errmsg = "Error in Optimisation of micelle dimension: {:s}".format(
