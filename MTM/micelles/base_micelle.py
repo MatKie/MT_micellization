@@ -244,6 +244,8 @@ class BaseMicelle(object):
             "assoc_saft": self._transfer_assoc_saftvrmie,
             "empirical_saft": self._empirical_saft_transfer,
             "assoc_saft_gamma": self._transfer_assoc_saftgammamie,
+            "assoc_saft_gamma_hydrated": self._transfer_assoc_saftgammamie_hydrated,
+            "assoc_saft_gamma_alkyl": self._transfer_assoc_saftgammamie_alkyl,
         }
         _free_energy_method = methods.get(method)
         if _free_energy_method is None:
@@ -314,16 +316,47 @@ class BaseMicelle(object):
     def _transfer_assoc_saftgammamie(self):
         """
         Correlation based on Saft Gamma Mie model with associating water model
+        but working just like the saft-vr mie based approach
         """
+        # temperature setter calls the calculation routines
+        self._transfer_saft_gamma.alkyl_ends = False
+        self._transfer_saft_gamma.hydrate_c1_carbon = False
         self._transfer_saft_gamma.temperature = self.temperature
         mu_ch2 = self._transfer_saft_gamma.mu_ch2
         mu_alkane = self._transfer_saft_gamma.mu_alkane
 
-        if self._transfer_saft_gamma.alkyl_ends:
-            return mu_alkane
-
         mu = 0.5 * mu_alkane + ((self.tail_carbons - 2.0) / 2.0 * mu_ch2)
         return mu
+
+    def _transfer_assoc_saftgammamie_hydrated(self):
+        """
+        Correlation based on Saft Gamma Mie model with associating water model.
+        Calculates the transfer contribution of a (m-1) alkyl tail.
+        If we got a surfactant with a nonyl tail, this will calculate
+        for an octyl tail (1 CH3 + 7 CH2).
+        """
+        # temperature setter calls the calculation routines
+        self._transfer_saft_gamma.alkyl_ends = True
+        self._transfer_saft_gamma.hydrate_c1_carbon = True
+        self._transfer_saft_gamma.temperature = self.temperature
+        mu_alkane = self._transfer_saft_gamma.mu_alkane
+
+        return mu_alkane
+
+    def _transfer_assoc_saftgammamie_alkyl(self):
+        """
+        Correlation based on Saft Gamma Mie model with associating water model.
+        Calculates the transfer contribution of a (m) alkyl tail.
+        If we got a surfactant with a nonyl tail, this will calculate
+        for an nonyl tail (1 CH3 + 8 CH2).
+        """
+        # temperature setter calls the calculation routines
+        self._transfer_saft_gamma.alkyl_ends = True
+        self._transfer_saft_gamma.hydrate_c1_carbon = False
+        self._transfer_saft_gamma.temperature = self.temperature
+        mu_alkane = self._transfer_saft_gamma.mu_alkane
+
+        return mu_alkane
 
     def get_interface_free_energy(self, method="empirical", curvature="flat"):
         """
@@ -450,6 +483,6 @@ class BaseMicelle(object):
 
     def _raise_not_implemented(self, methods):
         error_string = "Only these methods are implemented: {:s}".format(
-            *methods.keys()
+            ", ".join(methods.keys())
         )
         raise NotImplementedError(error_string)

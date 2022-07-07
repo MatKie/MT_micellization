@@ -93,7 +93,7 @@ class TestTransfer(object):
     def test_transfer_base_micelle(self):
         BM = micelle.BaseMicelle(40, 300, 8)
         BM._transfer_saft_gamma.hydrate_c1_carbon = True
-        mu_tr = BM.get_transfer_free_energy(method="assoc_saft_gamma")
+        mu_tr = BM.get_transfer_free_energy(method="assoc_saft_gamma_hydrated")
 
         assert mu_tr == pytest.approx(-14.04, abs=0.1)
 
@@ -117,18 +117,16 @@ class TestTransfer(object):
         BM3 = micelle.BaseMicelle(40, 280, 8)
         saft, emp, saft_alkyl, saft_hydrated = [], [], [], []
         for temp in temps:
-            BM1._transfer_saft_gamma.alkyl_ends = False
             BM1.temperature = temp
             saft.append(BM1.get_transfer_free_energy(method="assoc_saft_gamma"))
             emp.append(BM1.get_transfer_free_energy(method="empirical"))
-            BM2._transfer_saft_gamma.alkyl_ends = True
             BM2.temperature = temp
-            saft_alkyl.append(BM2.get_transfer_free_energy(method="assoc_saft_gamma"))
-            BM3._transfer_saft_gamma.alkyl_ends = True
+            saft_alkyl.append(
+                BM2.get_transfer_free_energy(method="assoc_saft_gamma_alkyl")
+            )
             BM3.temperature = temp
-            BM3._transfer_saft_gamma.hydrate_c1_carbon = True
             saft_hydrated.append(
-                BM3.get_transfer_free_energy(method="assoc_saft_gamma")
+                BM3.get_transfer_free_energy(method="assoc_saft_gamma_hydrated")
             )
 
         fig, ax = create_fig(1, 1)
@@ -175,24 +173,30 @@ class TestAverages:
         monomer_2 = []
         MTS = MTSystem(T, spheres=True, rodlike=False, vesicles=False)
         MTS._bounds = (1, 150)
-        chempot_args = {"transfer_method": "assoc_saft_gamma"}
         MTS2 = MTSystem(
-            T, spheres=True, rodlike=False, vesicles=False, chempot_args=chempot_args
+            T,
+            spheres=True,
+            rodlike=False,
+            vesicles=False,
+            chempot_args={"transfer_method": "assoc_saft_gamma"},
         )
-        MTS2.micelles[0]._transfer_saft_gamma.alkyl_ends = False
         MTS2._bounds = (1, 150)
         MTS3 = MTSystem(
-            T, spheres=True, rodlike=False, vesicles=False, chempot_args=chempot_args
+            T,
+            spheres=True,
+            rodlike=False,
+            vesicles=False,
+            chempot_args={"transfer_method": "assoc_saft_gamma_hydrated"},
         )
         MTS3._bounds = (1, 150)
-        MTS3.micelles[0]._transfer_saft_gamma.alkyl_ends = True
-        MTS3.micelles[0]._transfer_saft_gamma.hydrate_c1_carbon = True
         MTS4 = MTSystem(
-            T, spheres=True, rodlike=False, vesicles=False, chempot_args=chempot_args
+            T,
+            spheres=True,
+            rodlike=False,
+            vesicles=False,
+            chempot_args={"transfer_method": "assoc_saft_gamma_alkyl"},
         )
         MTS4._bounds = (1, 150)
-        MTS4.micelles[0]._transfer_saft_gamma.alkyl_ends = True
-        MTS4.micelles[0]._transfer_saft_gamma.hydrate_c1_carbon = False
         x = np.logspace(-4, 0, 20)
         for xs in x:
             # Awful hack, fix this by making these things attributes!

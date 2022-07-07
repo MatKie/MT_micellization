@@ -7,6 +7,22 @@ import numpy as np
 
 class TransferSaftGamma(object):
     def __init__(self, tail_length, alkyl_ends=True, hydrate_c1_carbon=False):
+        """
+        Handles the saft-gamma mie calls to sgtpy and gets the raw data
+        to calculate the free energy difference of transfer with 
+        SAFT-gamma Mie
+
+        Parameters
+        ----------
+        tail_length : int
+            Number of carbon atoms in the tail of surfactant 
+        alkyl_ends : bool, optional
+            if True calculate transfer for an alkyl (chop one ch3 off), 
+            by default True
+        hydrate_c1_carbon : bool, optional
+            if True chop one CH2 group off, as it's hydrated, 
+            by default False
+        """
         self.tail_length = tail_length
         self.mu_ch2 = None  # Slope of lngamma vs cn
         self.mu_alkane = None  # Transfer energy of alkane
