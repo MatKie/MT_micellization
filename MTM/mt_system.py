@@ -47,7 +47,7 @@ class MTSystem(object):
         self.chempot_args = chempot_args
         self._bounds = (1, 1000)
 
-    def get_free_energy_minimas(self, T=None, m=None, **kwargs):
+    def get_free_energy_minimas(self, T=None, m=None, hot_start=False, **kwargs):
         """
         Calculate free energy of various micelle shapes over all
         aggregatin numbers.
@@ -81,7 +81,7 @@ class MTSystem(object):
         # Loop over sizes and micelle types, if it's optimisable do it.
         # If optimised geometry is not feasible give arbitrary high value.
         for i, size in enumerate(self.sizes):
-            chempots[i, :] = self.get_chempots(size)
+            chempots[i, :] = self.get_chempots(size, hot_start=hot_start)
 
         # Get the minima
         self.free_energy_minimas = np.apply_along_axis(min, axis=1, arr=chempots)
