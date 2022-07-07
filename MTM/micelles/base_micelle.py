@@ -242,6 +242,7 @@ class BaseMicelle(object):
         methods = {
             "empirical": self._transfer_empirical,
             "assoc_saft": self._transfer_assoc_saftvrmie,
+            "empirical_saft": self._empirical_saft_transfer,
             "assoc_saft_gamma": self._transfer_assoc_saftgammamie,
         }
         _free_energy_method = methods.get(method)
@@ -287,6 +288,26 @@ class BaseMicelle(object):
             mu_alkane = mu_alkanes.get(11) + (nc - 11) * mu_ch2
 
         mu = 0.5 * mu_alkane + ((nc - 2.0) / 2.0 * mu_ch2)
+
+        return mu
+
+    def _empirical_saft_transfer(self):
+        """
+        Use \Delta\mu_CH3 + (C_n - 1) \Delta\mu_CH2 = \Delta\mu_g
+        """
+        self._transfer_saft.temperature = self.temperature
+        nc = self.tail_carbons
+        mu_ch2 = self._transfer_saft.mu_ch2
+        mu_alkanes = self._transfer_saft.mu_alkanes
+        if nc < 5:
+            raise ValueError("Probably not sensible to have alkane tails that small?")
+        elif nc > 4 and nc < 12:
+            mu_alkane = mu_alkanes.get(nc)
+        elif nc > 11:
+            mu_alkane = mu_alkanes.get(11) + (nc - 11) * mu_ch2
+
+        mu_ch3 = (mu_alkanes.get(nc) - (nc - 2) * mu_ch2) / 2
+        mu = mu_ch3 + (nc - 1) * mu_ch2
 
         return mu
 
