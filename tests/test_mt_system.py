@@ -112,7 +112,6 @@ class TestGetFreeEnergyMinimas:
         ax.set_ylabel("$\Delta\mu^0_g / k_b T$")
         save_to_file(os.path.join(this_path, "plot_combined_minima"))
 
-    @pytest.mark.xfail
     def test_sph_vs_vesicle_lower(self):
         """
         At very low aggregation numbers spherical micelles _should_ be the
@@ -123,7 +122,6 @@ class TestGetFreeEnergyMinimas:
         values = MTS.get_chempots(27)
         assert values[0] < values[2]
 
-    @pytest.mark.xfail
     def test_sph_vs_vesicle_upper(self):
         """
         At very low aggregation numbers spherical micelles _should_ be the
@@ -164,14 +162,16 @@ class TestGetFreeEnergyMinimas:
         MTSSmall = MTSystem()
         MTSBig = MTSystem()
 
-        _ = MTSSmall.get_chempots(26)
-        _ = MTSBig.get_chempots(27)
+        small_chempots = MTSSmall.get_chempots(26, hot_start=True)
+        big_chempots = MTSBig.get_chempots(27, hot_start=True)
 
         SmallMicelle = MTSSmall.micelles[2]
         BigMicelle = MTSBig.micelles[2]
 
-        assert SmallMicelle.geometry_check == False
+        assert SmallMicelle.geometry_check == True
         assert BigMicelle.geometry_check == True
+        assert small_chempots[0] < small_chempots[-1]
+        assert big_chempots[0] > big_chempots[-1]
 
 
 class TestGetMonomerConcentration:
