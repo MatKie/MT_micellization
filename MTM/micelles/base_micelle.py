@@ -4,6 +4,7 @@ import warnings
 from scipy.optimize import minimize, LinearConstraint
 from ._transfer_saft import TransferSaft
 from ._transfer_saft_gamma import TransferSaftGamma
+from ._sigma_sgt import SigmaSGT
 
 
 class BaseMicelle(object):
@@ -55,6 +56,7 @@ class BaseMicelle(object):
         self.boltzman = 1.38064852
         self._transfer_saft = TransferSaft()
         self._transfer_saft_gamma = TransferSaftGamma(self.tail_carbons)
+        self._sigma_sgt = SigmaSGT()
 
     def get_delta_chempot(
         self,
@@ -402,7 +404,7 @@ class BaseMicelle(object):
         float
             Interface free energy in units of k_b*T.
         """
-        methods = {"empirical": self._sigma_agg}
+        methods = {"empirical": self._sigma_agg, "sgt": self._sigma_sgt}
         sigma_agg = methods.get(method)
         if sigma_agg is None:
             self._raise_not_implemented(methods)
@@ -410,6 +412,13 @@ class BaseMicelle(object):
         return sigma_agg() * (
             self.area_per_surfactant - self.shielded_surface_area_per_surfactant
         )
+
+    def _sigma_sgt(self):
+        """
+        Correlation for interfacial tension oil-water from Enders and Haentzschel 1998
+        """
+
+        return self._sigma_agg()
 
     def _sigma_agg(self):
         """
