@@ -56,7 +56,7 @@ class BaseMicelle(object):
         self.boltzman = 1.38064852
         self._transfer_saft = TransferSaft()
         self._transfer_saft_gamma = TransferSaftGamma(self.tail_carbons)
-        self._sigma_sgt = SigmaSGT()
+        self._sigma_sgt = SigmaSGT(self.tail_carbons)
 
     def get_delta_chempot(
         self,
@@ -415,8 +415,10 @@ class BaseMicelle(object):
 
     def _sigma_sgt(self):
         """
-        Correlation for interfacial tension oil-water from Enders and Haentzschel 1998
+        Interfacial tension from SGT with SAFT-VR Mie
         """
+        self._sigma_sgt.temperature = self.temperature
+        sigma_sgt = self._sigma_sgt.get_ift()
 
         return self._sigma_agg()
 
