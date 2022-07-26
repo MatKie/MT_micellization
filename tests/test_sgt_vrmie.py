@@ -4,11 +4,16 @@ from MTM.micelles._sigma_sgt import SigmaSGT
 
 class TestEos:
     def test_set_eos(self):
-        SGT = SigmaSGT(8, bij_correlation="linear")
+        SGT = SigmaSGT(8)
         SGT.temperature = 298.15
         eos = SGT.eos
 
-        assert eos.beta0[0, 1] == -0.00140671 * 298.15 + 0.90335974
+        assert (
+            eos.beta0[0, 1]
+            == (1.01385065e-05 * 298.15 * 298.15)
+            - (7.31757041e-03 * 298.15)
+            + 1.75636346e00
+        )
         assert (
             eos.KIJ0saft[0, 1]
             == -3.76764999e-06 * 298.15 * 298.15
@@ -17,7 +22,7 @@ class TestEos:
         )
 
     def test_lle(self):
-        SGT = SigmaSGT(8, bij_correlation="linear")
+        SGT = SigmaSGT(8)
         SGT.temperature = 298.15
         rho_l1, rho_l2 = SGT.rho_l1, SGT.rho_l2
 
@@ -26,7 +31,7 @@ class TestEos:
 
 class TestSGT:
     def test_calc_ift_octane_quadratic(self):
-        SGT = SigmaSGT(8, bij_correlation="quadratic")
+        SGT = SigmaSGT(8)
         SGT.temperature = 298.15
 
         ift = SGT.get_ift()
@@ -34,7 +39,7 @@ class TestSGT:
         assert ift == pytest.approx(51.83, abs=0.1)
 
     def test_calc_ift_octane_linear(self):
-        SGT = SigmaSGT(8, bij_correlation="linear")
+        SGT = SigmaSGT(8)
         SGT.temperature = 298.15
 
         ift = SGT.get_ift()

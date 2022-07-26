@@ -3,10 +3,11 @@ from sgtpy import mixture, saftvrmie
 from sgtpy.equilibrium import lle, lle_init
 from sgtpy.sgt import sgt_mix
 from numpy import poly1d, array
+from numpy.linalg import LinAlgError
 
 
 class SigmaSGT(SaftVR):
-    def __init__(self, tail_carbons, bij_correlation="quadratic"):
+    def __init__(self, tail_carbons):
         super().__init__()
         self.p = 101325
         self.tail_carbons = tail_carbons
@@ -17,11 +18,12 @@ class SigmaSGT(SaftVR):
         self.component = self._SaftVR__components[index]
         kij_polynomial = self._SaftVR__kij_coeffs[index]
         self.kij_polynomial = poly1d(kij_polynomial)
-        bij_polynomial = self._SaftVR__bij_coeffs.get(bij_correlation)[index]
+        bij_polynomial = self._SaftVR__bij_coeffs[index]
         self.bij_polynomial = poly1d(bij_polynomial)
         self.eos = None
         self.rho_l1, self.rho_l2 = None, None
         self._T = None
+        self.itmax = 25
 
         # sgt_mix parameters
         self.z0 = 10
@@ -42,29 +44,37 @@ class SigmaSGT(SaftVR):
             self.eos = self._set_eos()
             self.rho_l1, self.rho_l2 = self._get_lle(self.eos)
 
-    def get_ift(self):
+    def get_ift(self, **kwargs):
+        rho0 = kwargs.get("rho0", self.rho0)
+        z0 = kwargs.get("z0", self.z0)
+        itmax = kwargs.get("itmax", self.itmax)
         sol = sgt_mix(
             self.rho_l1,
             self.rho_l2,
             self._T,
             self.p,
             self.eos,
-            z0=self.z0,
-            rho0=self.rho0,
+            z0=z0,
+            rho0=rho0,
             full_output=True,
+            itmax=itmax,
         )
         dz0 = 0
         while not sol.success and dz0 < self.max_dz0:
             dz0 += 5
-            sol = sgt_mix(
-                self.rho_l1,
-                self.rho_l2,
-                self._T,
-                self.p,
-                z0=self.z0 + dz0,
-                rho0=sol,
-                full_output=True,
-            )
+            try:
+                sol = sgt_mix(
+                    self.rho_l1,
+                    self.rho_l2,
+                    self._T,
+                    self.p,
+                    z0=self.z0 + dz0,
+                    rho0=sol,
+                    full_output=True,
+                    itmax=itmax,
+                )
+            except LinAlgError:
+                pass
 
         if not sol.success:
             raise RuntimeError("Could not get interfacial tension from SGT+SAFT-VR Mie")
@@ -72,6 +82,7 @@ class SigmaSGT(SaftVR):
         return sol.tension
 
     def _set_eos(self):
+        if self.model == 'SAFTVR'
         mix = mixture(self._SaftVR__water, self.component)
         kij = self.kij_polynomial(self._T)
         Kij = array([[0.0, kij], [kij, 0.0]])
