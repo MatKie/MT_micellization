@@ -7,6 +7,8 @@ from numpy.linalg import LinAlgError
 
 
 class SigmaSGT(SaftVR):
+    interfacial_tension_vr = {}
+
     def __init__(self, tail_carbons):
         super().__init__()
         self.p = 101325
@@ -32,7 +34,7 @@ class SigmaSGT(SaftVR):
 
     @property
     def temperature(self):
-        return self._temperature
+        return self._T
 
     @temperature.setter
     def temperature(self, T):
@@ -45,6 +47,18 @@ class SigmaSGT(SaftVR):
             self.rho_l1, self.rho_l2 = self._get_lle(self.eos)
 
     def get_ift(self, **kwargs):
+        ift = SigmaSGT.interfacial_tension_vr.get(self.tail_carbons, {}).get(
+            self.temperature
+        )
+        if ift == None:
+            ift = self._get_ift(**kwargs)
+            SigmaSGT.interfacial_tension_vr.update(
+                {self.tail_carbons: {self.temperature: ift}}
+            )
+
+        return ift
+
+    def _get_ift(self, **kwargs):
         rho0 = kwargs.get("rho0", self.rho0)
         z0 = kwargs.get("z0", self.z0)
         itmax = kwargs.get("itmax", self.itmax)
@@ -82,7 +96,6 @@ class SigmaSGT(SaftVR):
         return sol.tension
 
     def _set_eos(self):
-        if self.model == 'SAFTVR'
         mix = mixture(self._SaftVR__water, self.component)
         kij = self.kij_polynomial(self._T)
         Kij = array([[0.0, kij], [kij, 0.0]])

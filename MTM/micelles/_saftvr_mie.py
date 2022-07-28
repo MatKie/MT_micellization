@@ -20,10 +20,24 @@ class SaftVR(object):
             "pentane", ms=2, sigma=4.248, eps=317.5, lambda_r=16.06, lambda_a=6.0
         )
         self.__HexaneComponent = component(
-            "hexane", ms=2, sigma=4.508, eps=376.35, lambda_r=19.57, lambda_a=6.0
+            "hexane",
+            ms=2,
+            sigma=4.508,
+            eps=376.35,
+            lambda_r=19.57,
+            lambda_a=6.0,
+            cii=3.7489834105357965e-19,
+            Mw=86.18,
         )
         self.__HeptaneComponent = component(
-            "heptane", ms=2, sigma=4.766, eps=436.13, lambda_r=23.81, lambda_a=6.0
+            "heptane",
+            ms=2,
+            sigma=4.766,
+            eps=436.13,
+            lambda_r=23.81,
+            lambda_a=6.0,
+            cii=4.7586094841143767e-19,
+            Mw=100.21,
         )
         self.__OctaneComponent = component(
             "octane",
@@ -32,16 +46,38 @@ class SaftVR(object):
             eps=333.7,
             lambda_r=16.14,
             lambda_a=6.0,
-            cii=5.8915398756858572e-19,
+            cii=5.9276345987710738e-19,
+            Mw=114.13,
         )
         self.__NonaneComponent = component(
-            "nonane", ms=3, sigma=4.406, eps=374.21, lambda_r=18.31, lambda_a=6.0
+            "nonane",
+            ms=3,
+            sigma=4.406,
+            eps=374.21,
+            lambda_r=18.31,
+            lambda_a=6.0,
+            cii=7.3917359643968676e-19,
+            Mw=128.2,
         )
         self.__DecaneComponent = component(
-            "dodecane", ms=3, sigma=4.584, eps=415.19, lambda_r=20.92, lambda_a=6.0
+            "dodecane",
+            ms=3,
+            sigma=4.584,
+            eps=415.19,
+            lambda_r=20.92,
+            lambda_a=6.0,
+            cii=8.8898800228953004e-19,
+            Mw=142.29,
         )
         self.__UndecaneComponent = component(
-            "undecane", ms=4, sigma=4.216, eps=348.9, lambda_r=16.84, lambda_a=6.0
+            "undecane",
+            ms=4,
+            sigma=4.216,
+            eps=348.9,
+            lambda_r=16.84,
+            lambda_a=6.0,
+            cii=1.0469158312483699e-18,
+            Mw=156.31,
         )
         self.__components = [
             self.__PentaneComponent,

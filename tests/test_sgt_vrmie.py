@@ -1,5 +1,6 @@
 import pytest
 from MTM.micelles._sigma_sgt import SigmaSGT
+from MTM.micelles._sigma_sgt_gamma import SigmaSGTGamma
 
 
 class TestEos:
@@ -32,16 +33,9 @@ class TestEos:
 class TestSGT:
     def test_calc_ift_octane_quadratic(self):
         SGT = SigmaSGT(8)
-        SGT.temperature = 298.15
+        SGT.temperature = 294.4117
 
         ift = SGT.get_ift()
 
-        assert ift == pytest.approx(51.83, abs=0.1)
+        assert ift == pytest.approx(51.50, abs=0.01)
 
-    def test_calc_ift_octane_linear(self):
-        SGT = SigmaSGT(8)
-        SGT.temperature = 298.15
-
-        ift = SGT.get_ift()
-
-        assert ift == pytest.approx(51.53, abs=0.1)
