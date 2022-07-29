@@ -14,10 +14,11 @@ class RodlikeMicelle(BaseMicelle):
     main methods there.
     """
 
-    def __init__(self, *args, throw_errors=False):
+    def __init__(self, *args, throw_errors=False, chempot_args={}):
         super().__init__(*args)
         self._r_sph, self._r_cyl = self._starting_values()
         self.throw_errors = throw_errors
+        self.chempot_args = chempot_args
 
     @classmethod
     def optimised_radii(cls, *args, **kwargs):
@@ -103,7 +104,7 @@ class RodlikeMicelle(BaseMicelle):
     def _optimiser_func(self, variables):
         self._r_sph = variables[0]
         self._r_cyl = variables[1]
-        obj_function = self.get_delta_chempot()
+        obj_function = self.get_delta_chempot(**self.chempot_args)
         if self.geometry_check:
             obj_function = 10
         return obj_function

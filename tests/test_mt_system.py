@@ -261,3 +261,34 @@ class TestGetMonomerConcentration:
 
         if not flag1 or not flag2 or not flag3:
             raise AssertionError("{:s}\n\n{:s}\n\n{:s}".format(mssg1, mssg2, mssg3))
+
+
+class TestSGTSystems:
+    def test_optimise_radii(self):
+        # make a test of total energy of micellisation with SGT and non
+        # SGT, maybe plot it
+        # check if ift gets calculated multiple times
+        chempot_args = {"interface_method": "sgt"}
+        SGT_rod = MTSystem(
+            T=300,
+            m=9,
+            surfactant_concentration=0.15,
+            chempot_args=chempot_args,
+            spheres=False,
+            vesicles=False,
+        )
+        SGT_ves = MTSystem(
+            T=300,
+            m=9,
+            surfactant_concentration=0.15,
+            chempot_args=chempot_args,
+            spheres=False,
+            rodlike=False,
+        )
+        SGT_rod._bounds = (60, 100)
+        SGT_ves.bounds = (60, 100)
+
+        SGT_rod.get_free_energy_minimas()
+        SGT_ves.get_free_energy_minimas()
+
+        assert 0 == 0

@@ -11,7 +11,7 @@ class BilayerVesicle(BaseMicelle):
     bilayer vesicle micelles. Follows Enders and Haentzschel 1998.
     """
 
-    def __init__(self, *args, throw_errors=True):
+    def __init__(self, *args, throw_errors=True, chempot_args={}):
         """
         Parameters
         ----------
@@ -21,6 +21,7 @@ class BilayerVesicle(BaseMicelle):
         super().__init__(*args)
         self._r_out, self._t_out = self._starting_values()
         self.throw_errors = throw_errors
+        self.chempot_args = chempot_args
 
     @classmethod
     def optimised_radii(cls, *args, **kwargs):
@@ -37,7 +38,7 @@ class BilayerVesicle(BaseMicelle):
         instance.optimise_radii()
         return instance
 
-    def optimise_radii(self, method="objective", hot_start=False):
+    def optimise_radii(self, method="objective", hot_start=False, **kwargs):
         """
         Optimise outer radius and outer thickness of the vesicle to give
         lowest chemical potential.
@@ -70,8 +71,9 @@ class BilayerVesicle(BaseMicelle):
 
         if method == "objective":
             Optim = minimize(
-                self._optimiser_func, starting_values, bounds=((0, 10), (0, 10))
+                self._optimiser_func, starting_values, bounds=((0, 10), (0, 10)),
             )
+
         elif method == "derivative":
             Derivatives = BilayerVesicleDerivative(self)
             Optim = root(
@@ -103,7 +105,7 @@ class BilayerVesicle(BaseMicelle):
         """
         self._r_out = variables[0]
         self._t_out = variables[1]
-        obj_function = self.get_delta_chempot()
+        obj_function = self.get_delta_chempot(**self.chempot_args)
         if not self.geometry_check:
             obj_function = 10
         return obj_function

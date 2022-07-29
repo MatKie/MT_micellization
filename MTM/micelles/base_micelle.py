@@ -5,6 +5,7 @@ from scipy.optimize import minimize, LinearConstraint
 from ._transfer_saft import TransferSaft
 from ._transfer_saft_gamma import TransferSaftGamma
 from ._sigma_sgt import SigmaSGT
+from ._sigma_sgt_gamma import SigmaSGTGamma
 
 
 class BaseMicelle(object):
@@ -57,7 +58,7 @@ class BaseMicelle(object):
         self._transfer_saft = TransferSaft()
         self._transfer_saft_gamma = TransferSaftGamma(self.tail_carbons)
         self._sigma_sgt = SigmaSGT(self.tail_carbons)
-        self._sigma_sgt_gamma = SigamSGTGamma(self.tail_carbons)
+        self._sigma_sgt_gamma = SigmaSGTGamma(self.tail_carbons)
 
     def get_delta_chempot(
         self,
@@ -407,7 +408,7 @@ class BaseMicelle(object):
         """
         methods = {
             "empirical": self._sigma_agg,
-            "sgt": self._sigma_sgt,
+            "sgt": self._sigma_sgt_vr,
             "sgt_gamma_alkane": self._sigma_sgt_alkane,
             "sgt_gamma_alkyl": self._sigma_sgt_alkyl,
         }
@@ -415,7 +416,8 @@ class BaseMicelle(object):
         if sigma_agg is None:
             self._raise_not_implemented(methods)
 
-        return sigma_agg() * (
+        sigma = sigma_agg()
+        return sigma * (
             self.area_per_surfactant - self.shielded_surface_area_per_surfactant
         )
 
@@ -427,6 +429,7 @@ class BaseMicelle(object):
         self._sigma_sgt_gamma.alkyl_tails = False
         self._sigma_sgt_gamma.temperature = self.temperature
         sigma_sgt = self._sigma_sgt_gamma.get_ift()
+        return sigma_sgt
 
     def _sigma_sgt_alkyl(self):
         """
@@ -435,15 +438,16 @@ class BaseMicelle(object):
         """
         self._sigma_sgt_gamma.temperature = self.temperature
         sigma_sgt = self._sigma_sgt_gamma.get_ift()
+        return sigma_sgt
 
-    def _sigma_sgt(self):
+    def _sigma_sgt_vr(self):
         """
         Interfacial tension from SGT with SAFT-VR Mie
         """
         self._sigma_sgt.temperature = self.temperature
         sigma_sgt = self._sigma_sgt.get_ift()
 
-        return self._sigma_agg()
+        return sigma_sgt
 
     def _sigma_agg(self):
         """
