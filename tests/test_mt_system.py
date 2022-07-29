@@ -269,26 +269,25 @@ class TestSGTSystems:
         # SGT, maybe plot it
         # check if ift gets calculated multiple times
         chempot_args = {"interface_method": "sgt"}
-        SGT_rod = MTSystem(
-            T=300,
-            m=9,
-            surfactant_concentration=0.15,
-            chempot_args=chempot_args,
-            spheres=False,
-            vesicles=False,
+        SGT = MTSystem(
+            T=300, m=9, surfactant_concentration=0.15, chempot_args=chempot_args,
         )
-        SGT_ves = MTSystem(
-            T=300,
-            m=9,
-            surfactant_concentration=0.15,
-            chempot_args=chempot_args,
-            spheres=False,
-            rodlike=False,
-        )
-        SGT_rod._bounds = (60, 100)
-        SGT_ves.bounds = (60, 100)
+        SGT_normal = MTSystem(T=300, m=9, surfactant_concentration=0.15,)
+        SGT._bounds = (1, 200)
+        SGT_normal._bounds = (1, 200)
 
-        SGT_rod.get_free_energy_minimas()
-        SGT_ves.get_free_energy_minimas()
+        SGT.get_free_energy_minimas()
+        SGT_normal.get_free_energy_minimas()
 
-        assert 0 == 0
+        fig, ax = create_fig(1, 1)
+        ax = ax[0]
+
+        ax.plot(SGT.sizes, SGT.free_energy_minimas)
+        ax.plot(SGT_normal.sizes, SGT_normal.free_energy_minimas)
+
+        save_to_file(os.path.join(this_path, "SGT_vs_normal"))
+
+        for sgt_calced, normal_calced in zip(
+            SGT.free_energy_minimas, SGT_normal.free_energy_minimas
+        ):
+            assert sgt_calced > normal_calced

@@ -386,6 +386,22 @@ class BaseMicelle(object):
         self.interface_free_energy = _free_energy_method(method=method)
         return self.interface_free_energy
 
+    def _interfacial_tension(self, method="empirical"):
+        """
+        Helper function to detach interfacial tension calculation from 
+        multiplication with area per surfactant.
+        """
+        methods = {
+            "empirical": self._sigma_agg,
+            "sgt": self._sigma_sgt_vr,
+            "sgt_gamma_alkane": self._sigma_sgt_alkane,
+            "sgt_gamma_alkyl": self._sigma_sgt_alkyl,
+        }
+        sigma_agg = methods.get(method)
+        if sigma_agg is None:
+            self._raise_not_implemented(methods)
+        return sigma_agg()
+
     def _interface_flat(self, method="empirical"):
         """
         Low level function to calculate interfacial energy of flat
@@ -406,17 +422,11 @@ class BaseMicelle(object):
         float
             Interface free energy in units of k_b*T.
         """
-        methods = {
-            "empirical": self._sigma_agg,
-            "sgt": self._sigma_sgt_vr,
-            "sgt_gamma_alkane": self._sigma_sgt_alkane,
-            "sgt_gamma_alkyl": self._sigma_sgt_alkyl,
-        }
-        sigma_agg = methods.get(method)
-        if sigma_agg is None:
-            self._raise_not_implemented(methods)
 
-        sigma = sigma_agg()
+        sigma = self._interfacial_tension(method)
+        # mN/m (or mJ/m^2) to J/nm^2 and w. kbT to 1/nm^2 / kbT
+        sigma /= self.boltzman * 0.01 * self.temperature
+
         return sigma * (
             self.area_per_surfactant - self.shielded_surface_area_per_surfactant
         )
@@ -458,8 +468,6 @@ class BaseMicelle(object):
         sigma_w = 72.0 - (0.16 * (self.temperature - 298.0))
 
         sigma_agg = sigma_o + sigma_w - (1.1 * np.sqrt(sigma_o * sigma_w))
-        # mN/m (or mJ/m^2) to J/nm^2 and w. kbT to 1/nm^2 / kbT
-        sigma_agg /= self.boltzman * 0.01 * self.temperature
         return sigma_agg
 
     def get_steric_free_energy(self, method="VdW"):

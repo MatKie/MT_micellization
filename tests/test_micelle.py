@@ -154,7 +154,7 @@ class TestSphericalMicelleInterfaceFreeEnergy:
         calc_values = np.zeros(pub_values.shape)
         for i, Temp in enumerate(pub_values[:, 0]):
             mic.temperature = Temp
-            sigma_agg = mic._sigma_agg() * 1.38064852 * 0.01 * mic.temperature
+            sigma_agg = mic._sigma_agg()
             calc_values[i, 0] = Temp
             calc_values[i, 1] = sigma_agg
 

@@ -388,13 +388,21 @@ class RodlikeMicelleDerivative(object):
         return deform
 
     def deriv_interface_free_energy_wrt_r_sph(self):
-        sigma = self.base_micelle._sigma_agg()
+        sigma = self.base_micelle._interfacial_tension(
+            method=self.base_micelle.chempot_args.get("interface_method", "empirical")
+        )
+        # mN/m (or mJ/m^2) to J/nm^2 and w. kbT to 1/nm^2 / kbT
+        sigma /= self.base_micelle.boltzman * 0.01 * self.base_micelle.temperature
         d_area_drs = self.deriv_area_per_surfactant_wrt_r_sph
 
         return sigma * d_area_drs
 
     def deriv_interface_free_energy_wrt_r_cyl(self):
-        sigma = self.base_micelle._sigma_agg()
+        sigma = self.base_micelle._interfacial_tension(
+            method=self.base_micelle.chempot_args.get("interface_method", "empirical")
+        )
+        # mN/m (or mJ/m^2) to J/nm^2 and w. kbT to 1/nm^2 / kbT
+        sigma /= self.base_micelle.boltzman * 0.01 * self.base_micelle.temperature
         d_area_drc = self.deriv_area_per_surfactant_wrt_r_cyl
 
         return sigma * d_area_drc
