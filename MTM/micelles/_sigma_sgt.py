@@ -82,6 +82,7 @@ class SigmaSGT(SaftVR):
                     self.rho_l2,
                     self._T,
                     self.p,
+                    self.eos,
                     z0=self.z0 + dz0,
                     rho0=sol,
                     full_output=True,
