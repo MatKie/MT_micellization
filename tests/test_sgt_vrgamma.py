@@ -43,4 +43,4 @@ class TestSGTGamma:
 
         ift = SGT.get_ift()
 
-        assert ift == pytest.approx(53.27345419981676, abs=0.001)
+        assert ift == pytest.approx(51.17905825449729, abs=0.001)
