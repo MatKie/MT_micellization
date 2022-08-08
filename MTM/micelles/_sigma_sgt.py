@@ -28,9 +28,9 @@ class SigmaSGT(SaftVR):
         self.itmax = 25
 
         # sgt_mix parameters
-        self.z0 = 10
-        self.rho0 = "linear"  # options are 'hyperbolic' and a previous result
-        self.max_dz0 = 15
+        self.z0 = 20
+        self.rho0 = "hyperbolic"  # options are 'hyperbolic' and a previous result
+        self.max_dz0 = 25
 
     @property
     def temperature(self):
