@@ -25,7 +25,9 @@ class TestSGTGamma:
 
         ift = SGT.get_ift()
 
-        assert ift == pytest.approx(50.977, abs=0.01)
+        assert ift == pytest.approx(
+            50.977, abs=0.01
+        )  # it's .799 in other calcs don't ask me why
 
     def test_alkyl(self):
         SGT = SigmaSGTGamma(10)
@@ -33,4 +35,12 @@ class TestSGTGamma:
 
         ift = SGT.get_ift()
 
-        assert ift != pytest.approx(50.977, abs=0.01)
+        assert ift == pytest.approx(51.64637637016685, abs=0.01)
+
+    def test_hexyl(self):
+        SGT = SigmaSGTGamma(6)
+        SGT.temperature = 290.29411764705884
+
+        ift = SGT.get_ift()
+
+        assert ift == pytest.approx(53.27345419981676, abs=0.001)

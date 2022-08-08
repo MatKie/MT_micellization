@@ -35,7 +35,7 @@ class SigmaSGTGamma(SigmaSGT):
         # sgt_mix parameters
         self.z0 = 10
         self.rho0 = "linear"  # options are 'hyperbolic' and a previous result
-        self.max_dz0 = 15
+        self.max_dz0 = 25
 
     def get_ift(self, **kwargs):
         if self.alkyl_tails:
@@ -67,7 +67,7 @@ class SigmaSGTGamma(SigmaSGT):
         MW = n_CH3 * 15 + (self.tail_carbons + incr_tail_carbons) * 14
         alkane = component(
             GC={"CH3": n_CH3, "CH2": self.tail_carbons + incr_tail_carbons},
-            cii=SigmaSGTGamma.ciis.get(self.tail_carbons + incr_tail_carbons),
+            cii=SigmaSGTGamma.ciis.get(self.tail_carbons),
             Mw=MW,
         )
         mix = mixture(self.water, alkane)

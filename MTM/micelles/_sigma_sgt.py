@@ -74,7 +74,7 @@ class SigmaSGT(SaftVR):
             itmax=itmax,
         )
         dz0 = 0
-        while not sol.success and dz0 < self.max_dz0:
+        while not sol.success and dz0 < self.max_dz0 and sol.error < 0.1:
             dz0 += 5
             try:
                 sol = sgt_mix(
