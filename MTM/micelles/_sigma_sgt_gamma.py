@@ -51,7 +51,7 @@ class SigmaSGTGamma(SigmaSGT):
             ift = self._get_ift(**kwargs)
             update_dict = {self.tail_carbons: {self.temperature: ift}}
             if self.alkyl_tails:
-                SigmaSGTGamma.interfacial_tension_gamma.update(update_dict)
+                SigmaSGTGamma.interfacial_tension_gamma_alkyl.update(update_dict)
             else:
                 SigmaSGTGamma.interfacial_tension_gamma.update(update_dict)
 
