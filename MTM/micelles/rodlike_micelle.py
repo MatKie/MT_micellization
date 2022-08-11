@@ -60,11 +60,14 @@ class RodlikeMicelle(BaseMicelle):
             (if self.throw_error=False it's a warning)
         """
         Derivatives = RodlikeMicelleDerivative(self)
-        if hot_start:
+        if hot_start and self.geometry_check:
             x_0 = [self.radius_sphere, self.radius_cylinder]
         elif x_0 is not None:
             pass
         elif x_0 is None:
+            x_0 = list(self._starting_values())
+        else: 
+            # If geometry_check is False
             x_0 = list(self._starting_values())
 
         if method == "derivative":

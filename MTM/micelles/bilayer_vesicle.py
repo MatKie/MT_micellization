@@ -64,10 +64,10 @@ class BilayerVesicle(BaseMicelle):
         NotImplementedError
             if a method was chosen which is not implemented
         """
-        if not hot_start:
-            starting_values = np.asarray(self._starting_values())
-        else:
+        if hot_start and self.geometry_check:
             starting_values = np.asarray([self.radius_outer, self.thickness_outer])
+        else:
+            starting_values = np.asarray(self._starting_values())
 
         if method == "objective":
             Optim = minimize(
